@@ -1,0 +1,7 @@
+{
+  "name": "EcoFeira V2",
+  "description": "Um aplicativo inteligente para pesquisar preços em supermercados locais, comparar ofertas e otimizar sua lista de compras.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
