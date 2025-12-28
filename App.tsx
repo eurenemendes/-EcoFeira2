@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Routes, Route, useNavigate, useParams, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useParams, useLocation, Navigate, Link } from 'react-router-dom';
 import { Product, Supermarket, MainBanner, GridBanner, ShoppingListItem } from './types.ts';
 import { getProducts, getSupermarkets, getMainBanners, getGridBanners, getPopularSuggestions } from './services/googleSheetsService.ts';
 import { Layout } from './components/Layout.tsx';
@@ -258,6 +258,141 @@ const App: React.FC = () => {
     setSortBy('none');
     navigate(`/supermercado/${store.id}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const ProductDetailView = () => {
+    const { productId } = useParams();
+    const product = products.find(p => p.id === productId);
+    
+    const comparisons = useMemo(() => {
+      if (!product) return [];
+      const baseName = normalizeString(product.name);
+      return products
+        .filter(p => normalizeString(p.name) === baseName && p.id !== product.id)
+        .sort((a, b) => (a.isPromo ? a.promoPrice : a.normalPrice) - (b.isPromo ? b.promoPrice : b.normalPrice));
+    }, [product, products]);
+
+    if (!product) return null;
+
+    const currentPrice = product.isPromo ? product.promoPrice : product.normalPrice;
+    const store = stores.find(s => s.name === product.supermarket);
+
+    return (
+      <div className="space-y-12 sm:space-y-16 animate-in fade-in slide-in-from-bottom-6 duration-700">
+        <button 
+          onClick={() => navigate(-1)}
+          className="flex items-center space-x-2 text-sm font-black text-gray-400 hover:text-brand transition-colors group"
+        >
+          <svg className="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span>Voltar</span>
+        </button>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-20">
+          <div className="bg-white dark:bg-[#1e293b] rounded-[3rem] p-10 sm:p-20 flex items-center justify-center border border-gray-100 dark:border-gray-800 shadow-sm relative group overflow-hidden">
+            <div className="absolute inset-0 bg-brand/5 scale-0 group-hover:scale-100 transition-transform duration-1000 rounded-full blur-3xl"></div>
+            <img src={product.imageUrl} alt={product.name} className="relative z-10 w-full max-w-sm object-contain transition-transform duration-700 group-hover:scale-110" />
+            
+            {product.isPromo && (
+              <div className="absolute top-8 left-8 bg-red-500 text-white text-xs font-black px-6 py-2 rounded-2xl shadow-xl shadow-red-500/20 animate-pulse">
+                OFERTA IMPERDÍVEL
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col justify-center space-y-8">
+            <div className="space-y-2">
+              <span className="text-xs font-black text-brand bg-brand/10 px-4 py-2 rounded-xl uppercase tracking-widest">{product.category}</span>
+              <h1 className="text-4xl sm:text-6xl font-[1000] text-[#111827] dark:text-white tracking-tighter leading-none">{product.name}</h1>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="w-14 h-14 bg-white rounded-2xl p-2 shadow-sm border border-gray-100 flex items-center justify-center overflow-hidden">
+                <img src={store?.logo} className="w-full h-full object-contain" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Vendido por</p>
+                <Link to={`/supermercado/${store?.id}`} className="text-xl font-black text-gray-800 dark:text-gray-200 hover:text-brand transition-colors">{product.supermarket}</Link>
+              </div>
+            </div>
+
+            <div className="bg-[#f8fafc] dark:bg-[#0f172a] p-10 rounded-[2.5rem] border border-gray-100 dark:border-gray-800 space-y-4">
+              <div className="flex items-baseline space-x-2">
+                <p className="text-5xl sm:text-7xl font-[1000] text-brand tracking-tighter">R$ {currentPrice.toFixed(2).replace('.', ',')}</p>
+                {product.isPromo && <span className="text-xl text-gray-400 line-through font-bold">R$ {product.normalPrice.toFixed(2).replace('.', ',')}</span>}
+              </div>
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Preço atualizado em {product.lastUpdate || 'Hoje'}
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button 
+                onClick={() => addToList(product)}
+                className="flex-grow bg-brand text-white font-black py-6 rounded-3xl shadow-2xl shadow-brand/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center space-x-3"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
+                <span>Adicionar à Lista</span>
+              </button>
+              <button 
+                onClick={() => toggleFavorite(product.id)}
+                className={`p-6 rounded-3xl border-2 transition-all flex items-center justify-center ${favorites.includes(product.id) ? 'bg-red-500 border-red-500 text-white shadow-xl shadow-red-500/20' : 'border-gray-100 dark:border-gray-800 text-gray-400 hover:border-red-200'}`}
+              >
+                <svg className={`w-6 h-6 ${favorites.includes(product.id) ? 'fill-current' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-10 pt-10">
+          <div className="flex items-center justify-between">
+            <h2 className="text-3xl font-black text-[#111827] dark:text-white tracking-tighter">Compare Preços</h2>
+            <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{comparisons.length} outras opções encontradas</span>
+          </div>
+
+          {comparisons.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {comparisons.map((comp) => {
+                const compStore = stores.find(s => s.name === comp.supermarket);
+                const isCheaper = (comp.isPromo ? comp.promoPrice : comp.normalPrice) < currentPrice;
+                return (
+                  <div key={comp.id} className="bg-white dark:bg-[#1e293b] p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800 flex items-center justify-between hover:shadow-xl transition-all group">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gray-50 dark:bg-[#0f172a] rounded-xl p-2 border border-gray-100 dark:border-gray-800 flex items-center justify-center">
+                        <img src={compStore?.logo} className="w-full h-full object-contain" />
+                      </div>
+                      <div>
+                        <p className="font-black text-gray-800 dark:text-gray-200">{comp.supermarket}</p>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{compStore?.neighborhood}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-2xl font-black tracking-tighter ${isCheaper ? 'text-emerald-500' : 'text-gray-900 dark:text-white'}`}>
+                        R$ {(comp.isPromo ? comp.promoPrice : comp.normalPrice).toFixed(2).replace('.', ',')}
+                      </p>
+                      <button 
+                        onClick={() => navigate(`/produto/${comp.id}`)}
+                        className="text-[10px] font-black text-brand uppercase tracking-widest hover:underline"
+                      >
+                        Ver detalhes
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="p-16 text-center bg-gray-50/50 dark:bg-[#1e293b]/50 rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-gray-800">
+              <p className="text-xl font-bold text-gray-400">Não encontramos este item em outras lojas no momento.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   const StoreDetailView = () => {
@@ -646,6 +781,7 @@ const App: React.FC = () => {
           </div>
         } />
         <Route path="/supermercado/:storeId" element={<StoreDetailView />} />
+        <Route path="/produto/:productId" element={<ProductDetailView />} />
         <Route path="/favoritos" element={
           <div className="space-y-8 sm:space-y-12 animate-in fade-in duration-500">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 sm:gap-8">

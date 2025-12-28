@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Product } from '../types';
 
 interface ProductCardProps {
@@ -11,6 +12,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToList, onToggleFavorite, isFavorite, storeLogo }) => {
+  const navigate = useNavigate();
   const [isAdded, setIsAdded] = useState(false);
   const currentPrice = product.isPromo ? product.promoPrice : product.normalPrice;
   const discount = product.isPromo ? Math.round((1 - product.promoPrice / product.normalPrice) * 100) : 0;
@@ -19,13 +21,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToList, 
     e.stopPropagation();
     onAddToList(product);
     setIsAdded(true);
-    // Remove o estado de "adicionado" após 1.5s para permitir nova animação
     setTimeout(() => setIsAdded(false), 1500);
   };
 
+  const handleCardClick = () => {
+    navigate(`/produto/${product.id}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <div className="bg-white dark:bg-[#1e293b] rounded-2xl sm:rounded-[2.5rem] shadow-[0_4px_12px_rgba(0,0,0,0.04)] sm:shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.1)] transition-all duration-500 overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col group relative h-full">
-      {/* Área da Imagem */}
+    <div 
+      onClick={handleCardClick}
+      className="bg-white dark:bg-[#1e293b] rounded-2xl sm:rounded-[2.5rem] shadow-[0_4px_12px_rgba(0,0,0,0.04)] sm:shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.1)] transition-all duration-500 overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col group relative h-full cursor-pointer"
+    >
       <div className="relative pt-[85%] bg-[#f4f7f6] dark:bg-[#0f172a]/60 m-1 sm:m-2 rounded-xl sm:rounded-[2rem] overflow-hidden flex items-center justify-center">
         <img 
           src={product.imageUrl} 
@@ -34,14 +42,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToList, 
           loading="lazy"
         />
         
-        {/* Badge de Promoção */}
         {product.isPromo && discount > 0 && (
           <div className="absolute top-2 left-2 sm:top-4 sm:left-4 bg-red-500 text-white text-[8px] sm:text-[10px] font-black px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl shadow-lg shadow-red-500/30 animate-pulse-soft z-20">
             <span>{discount}% OFF</span>
           </div>
         )}
 
-        {/* Botão Favoritar */}
         <button 
           onClick={(e) => {
             e.stopPropagation();
@@ -54,7 +60,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToList, 
           </svg>
         </button>
 
-        {/* Logo + Nome do Supermercado */}
         {storeLogo && (
           <div className="absolute bottom-2 left-2 sm:bottom-4 sm:left-4 flex items-center bg-white/90 dark:bg-[#1e293b]/90 backdrop-blur-md rounded-lg sm:rounded-2xl p-1 pr-2 sm:p-1.5 sm:pr-4 shadow-lg border border-gray-100 dark:border-gray-700 z-10 transition-all group-hover:translate-x-1 group-hover:scale-105">
             <div className="w-5 h-5 sm:w-8 sm:h-8 bg-white dark:bg-gray-800 rounded-md sm:rounded-xl p-0.5 sm:p-1 mr-1 sm:mr-2 shadow-sm flex items-center justify-center">
@@ -67,7 +72,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToList, 
         )}
       </div>
       
-      {/* Área de Conteúdo */}
       <div className="p-3 sm:p-7 pt-2 sm:pt-4 flex flex-col flex-grow">
         <div className="flex justify-between items-center mb-1.5 sm:mb-3">
           <span className="text-[7px] sm:text-[9px] font-black text-brand bg-brand/10 dark:bg-brand/20 px-1.5 py-0.5 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg uppercase tracking-widest border border-brand/5">
