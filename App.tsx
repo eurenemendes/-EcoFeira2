@@ -474,6 +474,12 @@ const App: React.FC = () => {
   const [popularSuggestions, setPopularSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // Histórico de pesquisas recentes
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    const saved = localStorage.getItem('ecofeira_recent_searches');
+    return saved ? JSON.parse(saved) : [];
+  });
+  
   const categoriesRef = useRef<HTMLDivElement>(null);
   const storesRef = useRef<HTMLDivElement>(null);
   const storeCategoriesRef = useRef<HTMLDivElement>(null);
@@ -540,6 +546,10 @@ const App: React.FC = () => {
       localStorage.setItem('ecofeira_shopping_list', JSON.stringify(shoppingList));
     }
   }, [shoppingList, loading]);
+  
+  useEffect(() => {
+    localStorage.setItem('ecofeira_recent_searches', JSON.stringify(recentSearches));
+  }, [recentSearches]);
 
   useEffect(() => {
     if (!loading && (location.pathname === '/produtos' || location.pathname.startsWith('/supermercado/'))) {
@@ -566,6 +576,21 @@ const App: React.FC = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const saveSearch = (term: string) => {
+    if (!term.trim()) return;
+    setRecentSearches(prev => {
+      const filtered = prev.filter(s => s.toLowerCase() !== term.toLowerCase());
+      return [term, ...filtered].slice(0, 8);
+    });
+  };
+
+  const handleSearchSubmit = (term: string) => {
+    setSearchQuery(term);
+    setShowSearchSuggestions(false);
+    saveSearch(term);
+    navigate('/produtos');
+  };
 
   const addToList = (product: Product) => {
     setShoppingList(prev => {
@@ -739,7 +764,7 @@ const App: React.FC = () => {
                       value={searchQuery}
                       onChange={(e) => {setSearchQuery(e.target.value); setShowSearchSuggestions(true);}}
                       onFocus={() => setShowSearchSuggestions(true)}
-                      onKeyDown={(e) => e.key === 'Enter' && navigate('/produtos')}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit(searchQuery)}
                       className="w-full bg-transparent border-none focus:ring-0 py-3 sm:py-6 px-2 sm:px-5 text-base sm:text-xl font-bold dark:text-white placeholder-gray-400"
                     />
                   </div>
@@ -748,28 +773,62 @@ const App: React.FC = () => {
                       <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                   ) : (
-                    <button onClick={() => navigate('/produtos')} className="bg-brand hover:bg-brand-dark text-white font-[900] px-6 sm:px-16 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-brand/30 hover:scale-105 active:scale-95 text-sm sm:text-base">Buscar</button>
+                    <button onClick={() => handleSearchSubmit(searchQuery)} className="bg-brand hover:bg-brand-dark text-white font-[900] px-6 sm:px-16 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-brand/30 hover:scale-105 active:scale-95 text-sm sm:text-base">Buscar</button>
                   )}
                 </div>
-                {showSearchSuggestions && searchSuggestions.length > 0 && (
+                
+                {showSearchSuggestions && (
                   <div className="absolute top-full left-0 right-0 mt-4 bg-white/95 dark:bg-[#1e293b]/95 backdrop-blur-md rounded-2xl sm:rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden z-[200]">
-                    <div className="p-3 sm:p-5 bg-gray-50/50 dark:bg-[#0f172a]/30 border-b border-gray-100 dark:border-gray-800"><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sugestões EcoFeira</span></div>
-                    {searchSuggestions.map((s, idx) => (
-                      <button key={idx} onClick={() => {setSearchQuery(s.label); setShowSearchSuggestions(false); navigate('/produtos');}} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group text-left">
-                        <div className="flex items-center space-x-3 sm:space-x-4">
-                          <div className={`p-2 rounded-lg sm:p-2.5 sm:rounded-xl ${s.type === 'categoria' ? 'bg-orange-50 text-orange-500' : 'bg-brand/10 text-brand'}`}>{s.type === 'categoria' ? <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg> : <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>}</div>
-                          <span className="text-base sm:text-lg font-bold text-gray-700 dark:text-gray-200 group-hover:text-brand">{s.label}</span>
+                    {searchQuery.length === 0 && recentSearches.length > 0 && (
+                      <div className="animate-in fade-in duration-300">
+                        <div className="p-3 sm:p-5 bg-gray-50/50 dark:bg-[#0f172a]/30 border-b border-gray-100 dark:border-gray-800">
+                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pesquisas Recentes</span>
                         </div>
-                        <span className="text-[10px] font-black text-gray-400 uppercase">{s.type}</span>
-                      </button>
-                    ))}
+                        {recentSearches.map((s, idx) => (
+                          <button key={idx} onClick={() => handleSearchSubmit(s)} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group text-left">
+                            <div className="flex items-center space-x-3 sm:space-x-4">
+                              <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 group-hover:bg-brand group-hover:text-white transition-all">
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              </div>
+                              <span className="text-base sm:text-lg font-bold text-gray-700 dark:text-gray-200 group-hover:text-brand">{s}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {searchSuggestions.length > 0 && (
+                      <div className="animate-in fade-in duration-300">
+                        <div className="p-3 sm:p-5 bg-gray-50/50 dark:bg-[#0f172a]/30 border-b border-gray-100 dark:border-gray-800">
+                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sugestões EcoFeira</span>
+                        </div>
+                        {searchSuggestions.map((s, idx) => (
+                          <button key={idx} onClick={() => handleSearchSubmit(s.label)} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group text-left">
+                            <div className="flex items-center space-x-3 sm:space-x-4">
+                              <div className={`p-2 rounded-lg sm:p-2.5 sm:rounded-xl ${s.type === 'categoria' ? 'bg-orange-50 text-orange-500' : 'bg-brand/10 text-brand'}`}>
+                                {s.type === 'categoria' ? (
+                                  <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                                ) : (
+                                  <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                                )}
+                              </div>
+                              <span className="text-base sm:text-lg font-bold text-gray-700 dark:text-gray-200 group-hover:text-brand">{s.label}</span>
+                            </div>
+                            <span className="text-[10px] font-black text-gray-400 uppercase">{s.type}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
+              
               <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4">
                 <span className="text-[10px] font-[900] text-gray-400 uppercase tracking-widest block w-full text-center sm:w-auto sm:mr-4">Sugestões Populares</span>
                 {popularSuggestions.map(tag => (
-                  <button key={tag} onClick={() => {setSearchQuery(tag); setOnlyPromos(false); navigate('/produtos');}} className="bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-800 px-4 sm:px-7 py-2 sm:py-3 rounded-lg sm:rounded-2xl text-xs sm:text-[15px] font-[800] text-gray-700 dark:text-gray-300 hover:border-brand hover:text-brand transition-all hover:shadow-md">{tag}</button>
+                  <button key={tag} onClick={() => {setSearchQuery(tag); setOnlyPromos(false); handleSearchSubmit(tag);}} className="bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-800 px-4 sm:px-7 py-2 sm:py-3 rounded-lg sm:rounded-2xl text-xs sm:text-[15px] font-[800] text-gray-700 dark:text-gray-300 hover:border-brand hover:text-brand transition-all hover:shadow-md">{tag}</button>
                 ))}
                 {!popularSuggestions.includes('Promoções') && (
                   <button onClick={() => {setSearchQuery(''); setOnlyPromos(true); navigate('/produtos');}} className="bg-brand/5 dark:bg-brand/10 border border-brand/20 px-4 sm:px-7 py-2 sm:py-3 rounded-lg sm:rounded-2xl text-xs sm:text-[15px] font-[900] text-brand hover:bg-brand hover:text-white transition-all">🔥 Promoções</button>
@@ -779,6 +838,7 @@ const App: React.FC = () => {
             {mainBanners.length > 0 && <BannerCarousel banners={mainBanners} />}
           </div>
         } />
+        
         <Route path="/produtos" element={
           <div className="space-y-8 sm:space-y-16">
             <div className="flex flex-col space-y-6 sm:space-y-10">
@@ -789,21 +849,56 @@ const App: React.FC = () => {
                     <div className="pl-4 sm:pl-8 pr-2 sm:pr-4">
                       <svg className="w-5 h-5 sm:w-7 sm:h-7 text-gray-400 group-focus-within:text-brand transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     </div>
-                    <input type="text" placeholder="Pesquisar itens..." value={searchQuery} onChange={(e) => {setSearchQuery(e.target.value); setShowSearchSuggestions(true);}} onFocus={() => setShowSearchSuggestions(true)} className="w-full bg-transparent border-none focus:ring-0 py-4 sm:py-6 text-base sm:text-xl font-[800] dark:text-white outline-none" />
+                    <input 
+                      type="text" 
+                      placeholder="Pesquisar itens..." 
+                      value={searchQuery} 
+                      onChange={(e) => {setSearchQuery(e.target.value); setShowSearchSuggestions(true);}} 
+                      onFocus={() => setShowSearchSuggestions(true)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit(searchQuery)}
+                      className="w-full bg-transparent border-none focus:ring-0 py-4 sm:py-6 text-base sm:text-xl font-[800] dark:text-white outline-none" 
+                    />
                     <div className="p-2 pr-3 sm:pr-4">{searchQuery && <button onClick={() => {setSearchQuery(''); setShowSearchSuggestions(false);}} className="bg-red-500 text-white p-2.5 sm:p-4 rounded-lg sm:rounded-3xl shadow-lg shadow-red-500/20 hover:scale-105 transition-all"><svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg></button>}</div>
                   </div>
-                  {showSearchSuggestions && searchSuggestions.length > 0 && (
+                  
+                  {showSearchSuggestions && (
                     <div className="absolute top-full left-0 right-0 mt-4 bg-white/95 dark:bg-[#1e293b]/95 backdrop-blur-md rounded-2xl sm:rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden z-[200]">
-                      <div className="p-3 sm:p-5 bg-gray-50/50 dark:bg-[#0f172a]/30 border-b border-gray-100 dark:border-gray-800"><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Encontrado no EcoFeira</span></div>
-                      {searchSuggestions.map((s, idx) => (
-                        <button key={idx} onClick={() => {setSearchQuery(s.label); setShowSearchSuggestions(false);}} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group text-left">
-                          <div className="flex items-center space-x-3 sm:space-x-4">
-                            <div className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl ${s.type === 'categoria' ? 'bg-orange-50 text-orange-500' : 'bg-brand/10 text-brand'}`}>{s.type === 'categoria' ? <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg> : <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>}</div>
-                            <span className="text-base sm:text-lg font-bold text-gray-700 dark:text-gray-200 group-hover:text-brand">{s.label}</span>
+                      {searchQuery.length === 0 && recentSearches.length > 0 && (
+                        <div className="animate-in fade-in duration-300">
+                          <div className="p-3 sm:p-5 bg-gray-50/50 dark:bg-[#0f172a]/30 border-b border-gray-100 dark:border-gray-800">
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pesquisas Recentes</span>
                           </div>
-                          <span className="text-[10px] font-black text-gray-400 uppercase">{s.type}</span>
-                        </button>
-                      ))}
+                          {recentSearches.map((s, idx) => (
+                            <button key={idx} onClick={() => handleSearchSubmit(s)} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group text-left">
+                              <div className="flex items-center space-x-3 sm:space-x-4">
+                                <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 group-hover:bg-brand group-hover:text-white transition-all">
+                                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                </div>
+                                <span className="text-base sm:text-lg font-bold text-gray-700 dark:text-gray-200 group-hover:text-brand">{s}</span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {searchSuggestions.length > 0 && (
+                        <div className="animate-in fade-in duration-300">
+                          <div className="p-3 sm:p-5 bg-gray-50/50 dark:bg-[#0f172a]/30 border-b border-gray-100 dark:border-gray-800">
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Encontrado no EcoFeira</span>
+                          </div>
+                          {searchSuggestions.map((s, idx) => (
+                            <button key={idx} onClick={() => handleSearchSubmit(s.label)} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group text-left">
+                              <div className="flex items-center space-x-3 sm:space-x-4">
+                                <div className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl ${s.type === 'categoria' ? 'bg-orange-50 text-orange-500' : 'bg-brand/10 text-brand'}`}>{s.type === 'categoria' ? <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg> : <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>}</div>
+                                <span className="text-base sm:text-lg font-bold text-gray-700 dark:text-gray-200 group-hover:text-brand">{s.label}</span>
+                              </div>
+                              <span className="text-[10px] font-black text-gray-400 uppercase">{s.type}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -811,6 +906,7 @@ const App: React.FC = () => {
                   <div className="flex items-center px-2 sm:px-6 space-x-2 sm:space-x-4 text-gray-400"><svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg><select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="bg-transparent border-none focus:ring-0 text-[10px] sm:text-sm font-[900] text-[#111827] dark:text-white cursor-pointer py-2 px-0 max-w-[80px] sm:max-w-none"><option value="none">Relevantes</option><option value="price-asc">Menor Preço</option><option value="price-desc">Desconto %</option></select></div>
                 </div>
               </div>
+              
               <div className="space-y-6 sm:space-y-10">
                 <div className="overflow-hidden">
                   <span className="text-[10px] font-[900] text-gray-400 uppercase tracking-[1px] mb-3 block">CATEGORIAS:</span>
@@ -834,6 +930,7 @@ const App: React.FC = () => {
                 </div>
               </div>
             </div>
+            
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-12">
               {filteredProducts.map((p, idx) => {
                 const storeLogo = stores.find(s => s.name === p.supermarket)?.logo;
@@ -859,6 +956,7 @@ const App: React.FC = () => {
             </div>
           </div>
         } />
+        
         <Route path="/supermercados" element={
           <div className="space-y-12 sm:space-y-20">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 sm:gap-12">
@@ -882,6 +980,7 @@ const App: React.FC = () => {
             </div>
           </div>
         } />
+        
         <Route path="/supermercado/:storeId" element={
           <StoreDetailView 
             products={products}
@@ -902,6 +1001,7 @@ const App: React.FC = () => {
             categories={categories}
           />
         } />
+        
         <Route path="/produto/:productId" element={
           <ProductDetailView 
             products={products}
@@ -911,6 +1011,7 @@ const App: React.FC = () => {
             addToList={addToList}
           />
         } />
+        
         <Route path="/favoritos" element={
           <div className="space-y-8 sm:space-y-12 animate-in fade-in duration-500">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 sm:gap-8">
@@ -932,6 +1033,7 @@ const App: React.FC = () => {
             )}
           </div>
         } />
+        
         <Route path="/lista" element={
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-16">
             <div className="lg:col-span-7 xl:col-span-8 space-y-8 sm:space-y-12">
@@ -965,6 +1067,7 @@ const App: React.FC = () => {
             )}
           </div>
         } />
+        
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
