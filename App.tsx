@@ -37,6 +37,9 @@ const App: React.FC = () => {
   const [sortBy, setSortBy] = useState<'none' | 'price-asc' | 'price-desc'>('none');
   const [onlyPromos, setOnlyPromos] = useState(false);
 
+  // Modal State
+  const [isClearFavoritesModalOpen, setIsClearFavoritesModalOpen] = useState(false);
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -195,10 +198,9 @@ const App: React.FC = () => {
   };
 
   const clearAllFavorites = () => {
-    if (window.confirm('Tem certeza que deseja remover todos os itens dos favoritos?')) {
-      setFavorites([]);
-      localStorage.setItem('ecofeira_favorites', JSON.stringify([]));
-    }
+    setFavorites([]);
+    localStorage.setItem('ecofeira_favorites', JSON.stringify([]));
+    setIsClearFavoritesModalOpen(false);
   };
 
   const filteredProducts = useMemo(() => {
@@ -781,7 +783,7 @@ const App: React.FC = () => {
             </div>
             {favorites.length > 0 && (
               <button 
-                onClick={clearAllFavorites}
+                onClick={() => setIsClearFavoritesModalOpen(true)}
                 className="bg-red-500 hover:bg-red-600 text-white font-black px-6 sm:px-10 py-3 sm:py-5 rounded-xl sm:rounded-[1.5rem] shadow-xl shadow-red-500/30 hover:scale-105 active:scale-95 flex items-center justify-center space-x-2 sm:space-x-3 transition-all text-sm sm:text-base"
               >
                 <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -822,6 +824,41 @@ const App: React.FC = () => {
               >
                 Explorar Ofertas
               </button>
+            </div>
+          )}
+
+          {/* Modal de Confirmação para Limpar Favoritos */}
+          {isClearFavoritesModalOpen && (
+            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+              <div 
+                className="absolute inset-0 bg-black/40 backdrop-blur-md animate-in fade-in duration-300"
+                onClick={() => setIsClearFavoritesModalOpen(false)}
+              ></div>
+              <div className="relative bg-white dark:bg-[#1e293b] w-full max-w-md rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300 border border-gray-100 dark:border-gray-800 p-8 sm:p-12 text-center">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-red-50 dark:bg-red-500/10 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner">
+                  <svg className="w-10 h-10 sm:w-12 sm:h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-[900] text-[#111827] dark:text-white tracking-tighter mb-4">Limpar Favoritos?</h3>
+                <p className="text-gray-500 dark:text-gray-400 font-bold mb-10 leading-relaxed">
+                  Esta ação irá remover permanentemente todos os produtos da sua lista de favoritos. Deseja continuar?
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <button 
+                    onClick={() => setIsClearFavoritesModalOpen(false)}
+                    className="py-4 sm:py-5 font-[900] text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    onClick={clearAllFavorites}
+                    className="bg-red-500 hover:bg-red-600 text-white font-[900] py-4 sm:py-5 rounded-2xl shadow-xl shadow-red-500/30 hover:scale-105 active:scale-95 transition-all"
+                  >
+                    Limpar Tudo
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
