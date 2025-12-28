@@ -159,7 +159,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
               <button 
                 onClick={() => setView('favorites')}
                 className={`relative p-3 rounded-full transition-all border shadow-sm ${currentView === 'favorites' ? 'bg-red-50 text-red-500 border-red-100' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-100 dark:border-gray-800'}`}
-                data-tooltip="Meus Favoritos"
               >
                 <svg className={`w-5 h-5 ${currentView === 'favorites' ? 'fill-current' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -175,7 +174,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
                 onClick={toggleDarkMode}
                 className="hidden sm:flex p-3 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all border border-gray-100 dark:border-gray-800"
                 aria-label="Modo Noturno"
-                data-tooltip={isDarkMode ? "Ativar Modo Claro" : "Ativar Modo Escuro"}
               >
                 {isDarkMode ? (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,7 +189,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
               <button 
                 onClick={() => setView('list')}
                 className={`relative p-3 rounded-full transition-all border shadow-sm ${currentView === 'list' ? 'bg-brand/10 text-brand border-brand/20' : 'bg-white dark:bg-[#1e293b] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-100 dark:border-gray-800'}`}
-                data-tooltip="Minha Lista de Compras"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -229,13 +226,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
 
       <button 
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className={`fixed bottom-6 right-6 sm:bottom-10 sm:right-10 bg-brand/90 dark:bg-brand/80 backdrop-blur-md text-white p-4 rounded-full shadow-2xl shadow-brand/40 hover:scale-110 active:scale-90 transition-all duration-500 z-[110] group border border-white/20 dark:border-brand/30 ${
+        className={`fixed bottom-6 right-6 bg-brand/90 dark:bg-brand/80 backdrop-blur-md text-white p-2.5 rounded-xl shadow-2xl shadow-brand/40 hover:scale-110 active:scale-95 transition-all duration-500 z-[110] group border border-white/20 dark:border-brand/30 ${
           showScrollTop ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'
         }`}
         aria-label="Ir para o topo"
-        data-tooltip="Voltar ao Topo"
       >
-        <svg className="w-6 h-6 transition-transform group-hover:-translate-y-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 transition-transform group-hover:-translate-y-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
         </svg>
       </button>
