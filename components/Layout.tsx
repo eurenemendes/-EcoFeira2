@@ -1,16 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
-import { View } from '../types.ts';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface LayoutProps {
   children: React.ReactNode;
-  currentView: View;
-  setView: (view: View) => void;
   cartCount: number;
   favoritesCount: number;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, cartCount, favoritesCount }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCount }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname;
+
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -48,10 +50,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
 
   const toggleDarkMode = () => setIsDarkMode(prev => !prev);
   const toggleMenu = () => setIsMenuOpen(prev => !prev);
-  const handleNav = (view: View) => {
-    setView(view);
+
+  const handleNav = (path: string) => {
+    navigate(path);
     setIsMenuOpen(false);
   };
+
+  const isActive = (path: string) => currentPath === path;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc] dark:bg-[#0f172a] transition-colors duration-300">
@@ -64,7 +69,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
         >
           <div className="p-6 h-full flex flex-col">
             <div className="flex items-center justify-between mb-10">
-              <div className="flex items-center" onClick={() => handleNav('home')}>
+              <div className="flex items-center cursor-pointer" onClick={() => handleNav('/')}>
                 <div className="bg-brand p-2 rounded-xl mr-3">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -80,23 +85,23 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
             </div>
 
             <nav className="flex-grow space-y-2">
-              <button onClick={() => handleNav('home')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${currentView === 'home' ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+              <button onClick={() => handleNav('/')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${isActive('/') ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                 <span>Início</span>
               </button>
-              <button onClick={() => handleNav('products')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${currentView === 'products' ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+              <button onClick={() => handleNav('/produtos')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${isActive('/produtos') ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
                 <span>Promoções</span>
               </button>
-              <button onClick={() => handleNav('stores')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${currentView === 'stores' ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+              <button onClick={() => handleNav('/supermercados')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${isActive('/supermercados') ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                 <span>Supermercados</span>
               </button>
-              <button onClick={() => handleNav('favorites')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${currentView === 'favorites' ? 'bg-red-50 text-red-500' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+              <button onClick={() => handleNav('/favoritos')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${isActive('/favoritos') ? 'bg-red-50 text-red-500' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                 <span>Favoritos</span>
               </button>
-              <button onClick={() => handleNav('list')} className={`w-full flex items-center justify-between p-4 rounded-2xl font-bold transition-all ${currentView === 'list' ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+              <button onClick={() => handleNav('/lista')} className={`w-full flex items-center justify-between p-4 rounded-2xl font-bold transition-all ${isActive('/lista') ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                 <div className="flex items-center space-x-4">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
                   <span>Lista de Compras</span>
@@ -131,7 +136,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
               </svg>
             </button>
 
-            <div className="flex items-center cursor-pointer flex-grow lg:flex-grow-0" onClick={() => setView('home')}>
+            <div className="flex items-center cursor-pointer flex-grow lg:flex-grow-0" onClick={() => handleNav('/')}>
               <div className="bg-brand p-2.5 rounded-2xl mr-3 shadow-lg shadow-brand/20 transition-transform hover:scale-105 active:scale-95">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -142,14 +147,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
             
             <nav className="hidden lg:flex items-center space-x-12">
               <button 
-                onClick={() => setView('products')}
-                className={`text-[15px] font-extrabold transition-all hover:scale-105 ${currentView === 'products' ? 'text-brand' : 'text-gray-500 dark:text-gray-400 hover:text-brand'}`}
+                onClick={() => handleNav('/produtos')}
+                className={`text-[15px] font-extrabold transition-all hover:scale-105 ${isActive('/produtos') ? 'text-brand' : 'text-gray-500 dark:text-gray-400 hover:text-brand'}`}
               >
                 Promoções
               </button>
               <button 
-                onClick={() => setView('stores')}
-                className={`text-[15px] font-extrabold transition-all hover:scale-105 ${currentView === 'stores' ? 'text-brand' : 'text-gray-500 dark:text-gray-400 hover:text-brand'}`}
+                onClick={() => handleNav('/supermercados')}
+                className={`text-[15px] font-extrabold transition-all hover:scale-105 ${isActive('/supermercados') ? 'text-brand' : 'text-gray-500 dark:text-gray-400 hover:text-brand'}`}
               >
                 Supermercados
               </button>
@@ -157,10 +162,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
 
             <div className="flex items-center space-x-2 sm:space-x-3">
               <button 
-                onClick={() => setView('favorites')}
-                className={`relative p-3 rounded-full transition-all border shadow-sm ${currentView === 'favorites' ? 'bg-red-50 text-red-500 border-red-100' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-100 dark:border-gray-800'}`}
+                onClick={() => handleNav('/favoritos')}
+                className={`relative p-3 rounded-full transition-all border shadow-sm ${isActive('/favoritos') ? 'bg-red-50 text-red-500 border-red-100' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-100 dark:border-gray-800'}`}
               >
-                <svg className={`w-5 h-5 ${currentView === 'favorites' ? 'fill-current' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-5 h-5 ${isActive('/favoritos') ? 'fill-current' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
                 {favoritesCount > 0 && (
@@ -187,8 +192,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
               </button>
 
               <button 
-                onClick={() => setView('list')}
-                className={`relative p-3 rounded-full transition-all border shadow-sm ${currentView === 'list' ? 'bg-brand/10 text-brand border-brand/20' : 'bg-white dark:bg-[#1e293b] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-100 dark:border-gray-800'}`}
+                onClick={() => handleNav('/lista')}
+                className={`relative p-3 rounded-full transition-all border shadow-sm ${isActive('/lista') ? 'bg-brand/10 text-brand border-brand/20' : 'bg-white dark:bg-[#1e293b] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-100 dark:border-gray-800'}`}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
