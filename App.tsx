@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { View, Product, Supermarket, MainBanner, GridBanner, ShoppingListItem } from './types';
-import { getProducts, getSupermarkets, getMainBanners, getGridBanners, getPopularSuggestions } from './services/googleSheetsService';
-import { Layout } from './components/Layout';
-import { ProductCard } from './components/ProductCard';
-import { BannerCarousel } from './components/BannerCarousel';
-import { CartOptimizer } from './components/CartOptimizer';
+import { View, Product, Supermarket, MainBanner, GridBanner, ShoppingListItem } from './types.ts';
+import { getProducts, getSupermarkets, getMainBanners, getGridBanners, getPopularSuggestions } from './services/googleSheetsService.ts';
+import { Layout } from './components/Layout.tsx';
+import { ProductCard } from './components/ProductCard.tsx';
+import { BannerCarousel } from './components/BannerCarousel.tsx';
+import { CartOptimizer } from './components/CartOptimizer.tsx';
 
 const normalizeString = (str: string) => 
   str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -21,11 +21,9 @@ const App: React.FC = () => {
   const [popularSuggestions, setPopularSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Refs para Drag Scroll
   const categoriesRef = useRef<HTMLDivElement>(null);
   const storesRef = useRef<HTMLDivElement>(null);
   
-  // States for Search
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const searchSuggestionRef = useRef<HTMLDivElement>(null);
@@ -42,28 +40,27 @@ const App: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      const [p, s, mb, gb, suggs] = await Promise.all([
-        getProducts(),
-        getSupermarkets(),
-        getMainBanners(),
-        getGridBanners(),
-        getPopularSuggestions()
-      ]);
-      setProducts(p);
-      setStores(s);
-      setMainBanners(mb);
-      setGridBanners(gb);
-      setPopularSuggestions(suggs);
-      
       try {
+        const [p, s, mb, gb, suggs] = await Promise.all([
+          getProducts(),
+          getSupermarkets(),
+          getMainBanners(),
+          getGridBanners(),
+          getPopularSuggestions()
+        ]);
+        setProducts(p);
+        setStores(s);
+        setMainBanners(mb);
+        setGridBanners(gb);
+        setPopularSuggestions(suggs);
+        
         const savedFavorites = localStorage.getItem('ecofeira_favorites');
         if (savedFavorites) {
           setFavorites(JSON.parse(savedFavorites));
         }
       } catch (e) {
-        console.error("Erro ao carregar favoritos:", e);
+        console.error("Erro ao carregar dados:", e);
       }
-
       setLoading(false);
     };
     loadData();
@@ -75,7 +72,6 @@ const App: React.FC = () => {
     }
   }, [favorites, loading]);
 
-  // Lógica de Drag Scroll (Mover ao arrastar o mouse)
   const setupDragScroll = (ref: React.RefObject<HTMLDivElement | null>) => {
     const el = ref.current;
     if (!el) return;
@@ -108,7 +104,7 @@ const App: React.FC = () => {
       if (!isDown) return;
       e.preventDefault();
       const x = e.pageX - el.offsetLeft;
-      const walk = (x - startX) * 2; // multiplicador de velocidade
+      const walk = (x - startX) * 2;
       el.scrollLeft = scrollLeft - walk;
     };
 
@@ -136,7 +132,6 @@ const App: React.FC = () => {
     }
   }, [loading, view]);
 
-  // Fechar sugestões ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (suggestionRef.current && !suggestionRef.current.contains(event.target as Node)) {
@@ -231,7 +226,7 @@ const App: React.FC = () => {
     }
 
     if (sortBy === 'price-asc') {
-      result.sort((a, b) => (a.isPromo ? a.promoPrice : a.normalPrice) - (b.isPromo ? b.normalPrice : b.normalPrice));
+      result.sort((a, b) => (a.isPromo ? a.promoPrice : a.normalPrice) - (b.isPromo ? b.promoPrice : b.normalPrice));
     } else if (sortBy === 'price-desc') {
       result.sort((a, b) => {
         const discA = a.isPromo ? (a.normalPrice - a.promoPrice) / a.normalPrice : 0;
@@ -243,7 +238,6 @@ const App: React.FC = () => {
     return result;
   }, [products, searchQuery, selectedCategory, selectedSupermarket, sortBy, onlyPromos]);
 
-  // Sugestões de busca baseadas no conteúdo digitado
   const searchSuggestions = useMemo(() => {
     if (!searchQuery || searchQuery.length < 2) return [];
     const q = normalizeString(searchQuery);
@@ -552,7 +546,6 @@ const App: React.FC = () => {
             <div className="space-y-6 sm:space-y-10">
               <div className="overflow-hidden">
                 <span className="text-[10px] font-[900] text-gray-400 dark:text-gray-500 uppercase tracking-[1px] mb-3 block">CATEGORIAS:</span>
-                {/* Ref adicionada para Drag Scroll */}
                 <div 
                   ref={categoriesRef}
                   className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar pb-2 cursor-grab select-none active:cursor-grabbing"
@@ -570,7 +563,6 @@ const App: React.FC = () => {
               </div>
               <div className="overflow-hidden">
                 <span className="text-[10px] font-[900] text-gray-400 dark:text-gray-500 uppercase tracking-[1px] mb-3 block">LOJAS:</span>
-                {/* Ref adicionada para Drag Scroll */}
                 <div 
                   ref={storesRef}
                   className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar pb-2 cursor-grab select-none active:cursor-grabbing"
@@ -745,7 +737,6 @@ const App: React.FC = () => {
                     {store.street}, N°{store.number}, {store.neighborhood}
                   </p>
                   
-                  {/* Status de Funcionamento */}
                   <div className="flex justify-center mt-2">
                     <div className={`inline-flex items-center px-4 py-1.5 rounded-full border text-[10px] sm:text-xs font-black uppercase tracking-widest space-x-2 ${
                       store.status?.toLowerCase() === 'aberto' 

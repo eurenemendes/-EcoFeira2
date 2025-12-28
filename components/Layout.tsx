@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { View } from '../types';
+import { View } from '../types.ts';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -55,7 +55,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc] dark:bg-[#0f172a] transition-colors duration-300">
-      {/* Side Menu Drawer (Mobile) */}
       <div 
         className={`fixed inset-0 z-[200] lg:hidden transition-opacity duration-300 ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       >
@@ -122,7 +121,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
       <header className="bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 sticky top-0 z-[100] transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
-            {/* Hamburger Button (Mobile) */}
             <button 
               onClick={toggleMenu}
               className="p-3 mr-2 lg:hidden text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-all border border-gray-100 dark:border-gray-800"
@@ -133,7 +131,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
               </svg>
             </button>
 
-            {/* Logo EcoFeira */}
             <div className="flex items-center cursor-pointer flex-grow lg:flex-grow-0" onClick={() => setView('home')}>
               <div className="bg-brand p-2.5 rounded-2xl mr-3 shadow-lg shadow-brand/20 transition-transform hover:scale-105 active:scale-95">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,7 +140,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
               <span className="text-2xl font-[900] text-[#111827] dark:text-white tracking-tighter">EcoFeira</span>
             </div>
             
-            {/* Navigation Links (Desktop) */}
             <nav className="hidden lg:flex items-center space-x-12">
               <button 
                 onClick={() => setView('products')}
@@ -159,7 +155,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
               </button>
             </nav>
 
-            {/* Icons Actions */}
             <div className="flex items-center space-x-2 sm:space-x-3">
               <button 
                 onClick={() => setView('favorites')}
@@ -232,7 +227,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView, 
         </div>
       </footer>
 
-      {/* Floating Action for scroll top */}
       <button 
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         className={`fixed bottom-6 right-6 sm:bottom-10 sm:right-10 bg-brand/90 dark:bg-brand/80 backdrop-blur-md text-white p-4 rounded-full shadow-2xl shadow-brand/40 hover:scale-110 active:scale-90 transition-all duration-500 z-[110] group border border-white/20 dark:border-brand/30 ${
