@@ -585,6 +585,10 @@ const App: React.FC = () => {
     });
   };
 
+  const removeRecentSearch = (term: string) => {
+    setRecentSearches(prev => prev.filter(s => s !== term));
+  };
+
   const handleSearchSubmit = (term: string) => {
     setSearchQuery(term);
     setShowSearchSuggestions(false);
@@ -785,16 +789,25 @@ const App: React.FC = () => {
                           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pesquisas Recentes</span>
                         </div>
                         {recentSearches.map((s, idx) => (
-                          <button key={idx} onClick={() => handleSearchSubmit(s)} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group text-left">
-                            <div className="flex items-center space-x-3 sm:space-x-4">
+                          <div key={idx} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group">
+                            <button onClick={() => handleSearchSubmit(s)} className="flex items-center space-x-3 sm:space-x-4 flex-grow text-left">
                               <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 group-hover:bg-brand group-hover:text-white transition-all">
                                 <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                               </div>
                               <span className="text-base sm:text-lg font-bold text-gray-700 dark:text-gray-200 group-hover:text-brand">{s}</span>
-                            </div>
-                          </button>
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); removeRecentSearch(s); }}
+                              className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                              title="Remover do histórico"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
                         ))}
                       </div>
                     )}
@@ -869,16 +882,25 @@ const App: React.FC = () => {
                             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pesquisas Recentes</span>
                           </div>
                           {recentSearches.map((s, idx) => (
-                            <button key={idx} onClick={() => handleSearchSubmit(s)} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group text-left">
-                              <div className="flex items-center space-x-3 sm:space-x-4">
+                            <div key={idx} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group">
+                              <button onClick={() => handleSearchSubmit(s)} className="flex items-center space-x-3 sm:space-x-4 flex-grow text-left">
                                 <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 group-hover:bg-brand group-hover:text-white transition-all">
                                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                   </svg>
                                 </div>
                                 <span className="text-base sm:text-lg font-bold text-gray-700 dark:text-gray-200 group-hover:text-brand">{s}</span>
-                              </div>
-                            </button>
+                              </button>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); removeRecentSearch(s); }}
+                                className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                title="Remover do histórico"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
                           ))}
                         </div>
                       )}
