@@ -23,6 +23,7 @@ const App: React.FC = () => {
   
   const categoriesRef = useRef<HTMLDivElement>(null);
   const storesRef = useRef<HTMLDivElement>(null);
+  const storeCategoriesRef = useRef<HTMLDivElement>(null);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
@@ -34,6 +35,7 @@ const App: React.FC = () => {
 
   const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
   const [selectedSupermarket, setSelectedSupermarket] = useState<string>('Todos');
+  const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'none' | 'price-asc' | 'price-desc'>('none');
   const [onlyPromos, setOnlyPromos] = useState(false);
 
@@ -125,12 +127,14 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!loading && view === 'products') {
+    if (!loading && (view === 'products' || view === 'store-detail')) {
       const cleanCats = setupDragScroll(categoriesRef);
       const cleanStores = setupDragScroll(storesRef);
+      const cleanStoreCats = setupDragScroll(storeCategoriesRef);
       return () => {
         cleanCats?.();
         cleanStores?.();
+        cleanStoreCats?.();
       };
     }
   }, [loading, view]);
@@ -240,6 +244,36 @@ const App: React.FC = () => {
     return result;
   }, [products, searchQuery, selectedCategory, selectedSupermarket, sortBy, onlyPromos]);
 
+  const currentStore = useMemo(() => {
+    return stores.find(s => s.id === selectedStoreId);
+  }, [stores, selectedStoreId]);
+
+  const storeDetailProducts = useMemo(() => {
+    if (!currentStore) return [];
+    let result = products.filter(p => p.supermarket === currentStore.name);
+
+    if (searchQuery) {
+      const q = normalizeString(searchQuery);
+      result = result.filter(p => normalizeString(p.name).includes(q));
+    }
+
+    if (selectedCategory !== 'Todas') {
+      result = result.filter(p => p.category === selectedCategory);
+    }
+
+    if (sortBy === 'price-asc') {
+      result.sort((a, b) => (a.isPromo ? a.promoPrice : a.normalPrice) - (b.isPromo ? b.promoPrice : b.normalPrice));
+    } else if (sortBy === 'price-desc') {
+      result.sort((a, b) => {
+        const discA = a.isPromo ? (a.normalPrice - a.promoPrice) / a.normalPrice : 0;
+        const discB = b.isPromo ? (b.normalPrice - b.promoPrice) / b.normalPrice : 0;
+        return discB - discA;
+      });
+    }
+
+    return result;
+  }, [products, currentStore, searchQuery, selectedCategory, sortBy]);
+
   const searchSuggestions = useMemo(() => {
     if (!searchQuery || searchQuery.length < 2) return [];
     const q = normalizeString(searchQuery);
@@ -286,6 +320,15 @@ const App: React.FC = () => {
   const categories = useMemo(() => ['Todas', ...Array.from(new Set<string>(products.map(p => p.category)))], [products]);
   const supermarketNames = useMemo(() => ['Todos', ...Array.from(new Set<string>(products.map(p => p.supermarket)))], [products]);
 
+  const openStoreDetail = (store: Supermarket) => {
+    setSelectedStoreId(store.id);
+    setSelectedCategory('Todas');
+    setSearchQuery('');
+    setSortBy('none');
+    setView('store-detail');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-[#0f172a]">
@@ -323,7 +366,8 @@ const App: React.FC = () => {
                 {[...shuffledStoresForMarquee, ...shuffledStoresForMarquee].map((store, idx) => (
                   <div 
                     key={`${store.id}-${idx}`} 
-                    className="flex items-center space-x-3 sm:space-x-4 bg-white/80 dark:bg-[#1e293b]/60 backdrop-blur-sm border border-gray-100 dark:border-gray-800 px-5 sm:px-8 py-3 sm:py-5 rounded-xl sm:rounded-2xl shadow-sm min-w-[200px] sm:min-w-[280px]"
+                    onClick={() => openStoreDetail(store)}
+                    className="flex items-center space-x-3 sm:space-x-4 bg-white/80 dark:bg-[#1e293b]/60 backdrop-blur-sm border border-gray-100 dark:border-gray-800 px-5 sm:px-8 py-3 sm:py-5 rounded-xl sm:rounded-2xl shadow-sm min-w-[200px] sm:min-w-[280px] cursor-pointer hover:bg-white transition-colors"
                   >
                     <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-white flex items-center justify-center p-1.5 sm:p-2 shadow-sm border border-gray-100 dark:border-gray-800">
                       <img src={store.logo} alt={store.name} className="w-full h-full object-contain" />
@@ -690,6 +734,7 @@ const App: React.FC = () => {
                       onClick={() => {
                         setStoreSearchQuery(s.name);
                         setShowStoreSuggestions(false);
+                        openStoreDetail(s);
                       }}
                       className="w-full flex items-center space-x-4 sm:space-x-6 p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-none group text-left"
                     >
@@ -756,10 +801,7 @@ const App: React.FC = () => {
                 </div>
                 <div className="pt-2 sm:pt-8 w-full">
                   <button 
-                    onClick={() => {
-                      setSelectedSupermarket(store.name);
-                      setView('products');
-                    }}
+                    onClick={() => openStoreDetail(store)}
                     className="w-full py-3 sm:py-6 border-2 border-gray-100 dark:border-gray-800 text-[#111827] dark:text-white font-[900] rounded-xl sm:rounded-[2rem] hover:border-brand hover:text-brand dark:hover:border-brand dark:hover:text-brand transition-all flex items-center justify-center space-x-2 sm:space-x-4 text-xs sm:text-xl"
                   >
                     <span>Ver Ofertas</span>
@@ -770,6 +812,162 @@ const App: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {view === 'store-detail' && currentStore && (
+        <div className="space-y-12 sm:space-y-16 animate-in fade-in slide-in-from-bottom-6 duration-700">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 sm:gap-12 bg-white dark:bg-[#1e293b] rounded-2xl sm:rounded-[3.5rem] p-6 sm:p-16 border border-gray-100 dark:border-gray-800 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-brand/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+            
+            <button 
+              onClick={() => setView('stores')}
+              className="absolute top-6 left-6 flex items-center space-x-2 text-xs sm:text-sm font-[900] text-gray-400 hover:text-brand transition-colors group"
+            >
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" />
+              </svg>
+              <span>Voltar aos Parceiros</span>
+            </button>
+
+            <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-12 mt-8 lg:mt-0 w-full lg:w-auto">
+              <div className="w-24 h-24 sm:w-44 sm:h-44 bg-[#f8fafc] dark:bg-[#0f172a] rounded-xl sm:rounded-[2.8rem] flex items-center justify-center p-4 sm:p-10 border border-gray-100 dark:border-gray-800 shadow-inner">
+                <img src={currentStore.logo} alt={currentStore.name} className="w-full h-full object-contain" />
+              </div>
+              <div className="text-center sm:text-left space-y-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <h1 className="text-3xl sm:text-6xl font-[1000] text-[#111827] dark:text-white tracking-tighter leading-none">{currentStore.name}</h1>
+                  <div className={`inline-flex items-center px-4 py-1.5 rounded-full border text-[10px] sm:text-xs font-black uppercase tracking-widest space-x-2 ${
+                    currentStore.status?.toLowerCase() === 'aberto' 
+                      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
+                      : 'bg-red-500/10 border-red-500/20 text-red-500'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
+                      currentStore.status?.toLowerCase() === 'aberto' 
+                        ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)] animate-pulse' 
+                        : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]'
+                    }`}></span>
+                    <span>{currentStore.status || 'Fechado'}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center sm:items-start space-y-1">
+                  <p className="text-gray-500 dark:text-gray-400 font-bold text-xs sm:text-lg flex items-center">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {currentStore.street}, N°{currentStore.number}
+                  </p>
+                  <p className="text-gray-400 dark:text-gray-500 font-bold text-[10px] sm:text-sm pl-0 sm:pl-7">Bairro: {currentStore.neighborhood}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4 w-full lg:w-auto">
+              {currentStore.flyerUrl && (
+                <a 
+                  href={currentStore.flyerUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-full lg:w-auto flex items-center justify-center space-x-3 bg-brand text-white font-[900] py-4 sm:py-6 px-10 rounded-xl sm:rounded-[2rem] shadow-xl shadow-brand/30 hover:scale-105 active:scale-95 transition-all text-sm uppercase tracking-wider"
+                >
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>Ver Encarte Digital</span>
+                </a>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-8 sm:space-y-12">
+            <div className="flex flex-col space-y-8">
+              <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
+                <div className="relative flex-grow w-full">
+                  <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800/40 rounded-xl sm:rounded-[2.5rem] -m-1"></div>
+                  <div className="relative flex items-center bg-white dark:bg-[#1e293b] rounded-xl sm:rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm transition-all focus-within:ring-4 focus-within:ring-brand/10">
+                    <div className="pl-4 sm:pl-8 pr-2 sm:pr-4 text-gray-400">
+                      <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <input 
+                      type="text"
+                      placeholder={`Buscar ofertas no ${currentStore.name}...`}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-transparent border-none focus:ring-0 py-4 sm:py-6 text-base sm:text-xl font-bold dark:text-white outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex-shrink-0 flex items-center bg-white dark:bg-[#1e293b] p-2.5 rounded-xl sm:rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm">
+                  <div className="flex items-center px-4 sm:px-6 space-x-3 text-gray-400">
+                    <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                    <select 
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as any)}
+                      className="bg-transparent border-none focus:ring-0 text-[10px] sm:text-sm font-[900] text-[#111827] dark:text-white cursor-pointer py-2 px-0"
+                    >
+                      <option value="none">Relevantes</option>
+                      <option value="price-asc">Menor Preço</option>
+                      <option value="price-desc">Desconto %</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="overflow-hidden">
+                <span className="text-[10px] font-[900] text-gray-400 dark:text-gray-500 uppercase tracking-[1px] mb-4 block">CATEGORIAS DISPONÍVEIS:</span>
+                <div 
+                  ref={storeCategoriesRef}
+                  className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar pb-2 cursor-grab select-none active:cursor-grabbing"
+                >
+                  {categories.map(cat => {
+                    const hasItems = cat === 'Todas' || products.some(p => p.supermarket === currentStore.name && p.category === cat);
+                    if (!hasItems) return null;
+                    
+                    return (
+                      <button 
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`flex-shrink-0 px-8 sm:px-12 py-3 sm:py-5 rounded-xl sm:rounded-[1.8rem] text-xs sm:text-[15px] font-[800] transition-all shadow-sm ${selectedCategory === cat ? 'bg-brand text-white shadow-xl shadow-brand/30 scale-105' : 'bg-white dark:bg-[#1e293b] text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-gray-800 hover:border-brand'}`}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {storeDetailProducts.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-12">
+                {storeDetailProducts.map((p) => (
+                  <ProductCard 
+                    key={p.id}
+                    product={p} 
+                    onAddToList={addToList} 
+                    onToggleFavorite={toggleFavorite}
+                    isFavorite={favorites.includes(p.id)}
+                    storeLogo={currentStore.logo} 
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-24 sm:py-40 bg-white dark:bg-[#1e293b] rounded-2xl sm:rounded-[4rem] border-2 border-dashed border-gray-100 dark:border-gray-800 flex flex-col items-center px-4">
+                <div className="w-20 h-20 sm:w-32 sm:h-32 bg-gray-50 dark:bg-[#0f172a] rounded-2xl sm:rounded-[2.5rem] flex items-center justify-center mb-6 sm:mb-10 shadow-inner">
+                  <svg className="w-10 h-10 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                </div>
+                <p className="text-gray-400 dark:text-gray-500 font-[800] text-xl sm:text-3xl tracking-tight mb-4">Nenhuma oferta encontrada</p>
+                <p className="text-gray-400 dark:text-gray-600 font-bold max-w-md mx-auto">Tente ajustar seus filtros ou pesquisar por outro termo.</p>
+              </div>
+            )}
           </div>
         </div>
       )}

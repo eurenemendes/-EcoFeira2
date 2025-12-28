@@ -1,3 +1,4 @@
+
 export interface Product {
   id: string;
   name: string;
@@ -59,4 +60,4 @@ export interface ComparisonResult {
   isBestOption: boolean;
 }
 
-export type View = 'home' | 'products' | 'stores' | 'list' | 'favorites';
+export type View = 'home' | 'products' | 'stores' | 'list' | 'favorites' | 'store-detail';
