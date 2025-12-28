@@ -41,8 +41,9 @@ const App: React.FC = () => {
   const [sortBy, setSortBy] = useState<'none' | 'price-asc' | 'price-desc'>('none');
   const [onlyPromos, setOnlyPromos] = useState(false);
 
-  // Modal State
+  // Modal States
   const [isClearFavoritesModalOpen, setIsClearFavoritesModalOpen] = useState(false);
+  const [isClearListModalOpen, setIsClearListModalOpen] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -65,6 +66,11 @@ const App: React.FC = () => {
         if (savedFavorites) {
           setFavorites(JSON.parse(savedFavorites));
         }
+
+        const savedList = localStorage.getItem('ecofeira_shopping_list');
+        if (savedList) {
+          setShoppingList(JSON.parse(savedList));
+        }
       } catch (e) {
         console.error("Erro ao carregar dados:", e);
       }
@@ -78,6 +84,12 @@ const App: React.FC = () => {
       localStorage.setItem('ecofeira_favorites', JSON.stringify(favorites));
     }
   }, [favorites, loading]);
+
+  useEffect(() => {
+    if (!loading) {
+      localStorage.setItem('ecofeira_shopping_list', JSON.stringify(shoppingList));
+    }
+  }, [shoppingList, loading]);
 
   const setupDragScroll = (ref: React.RefObject<HTMLDivElement | null>) => {
     const el = ref.current;
@@ -201,6 +213,12 @@ const App: React.FC = () => {
     setFavorites([]);
     localStorage.setItem('ecofeira_favorites', JSON.stringify([]));
     setIsClearFavoritesModalOpen(false);
+  };
+
+  const clearShoppingList = () => {
+    setShoppingList([]);
+    localStorage.setItem('ecofeira_shopping_list', JSON.stringify([]));
+    setIsClearListModalOpen(false);
   };
 
   const filteredProducts = useMemo(() => {
@@ -429,7 +447,7 @@ const App: React.FC = () => {
               onClick={() => navigate('/supermercados')}
               className="absolute top-6 left-6 flex items-center space-x-2 text-xs sm:text-sm font-[900] text-gray-400 hover:text-brand transition-colors group"
             >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" />
               </svg>
               <span>Voltar aos Parceiros</span>
@@ -799,14 +817,17 @@ const App: React.FC = () => {
               <div className="text-center py-24 sm:py-40 bg-white dark:bg-[#1e293b] rounded-2xl sm:rounded-[4rem] border-2 border-dashed border-gray-100 flex flex-col items-center px-4"><div className="w-20 h-20 sm:w-32 sm:h-32 bg-red-50 rounded-2xl flex items-center justify-center mb-6 shadow-inner"><svg className="w-10 h-10 sm:w-16 sm:h-16 text-red-200" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg></div><p className="text-gray-400 font-[800] text-xl tracking-tight mb-4">Lista de favoritos vazia</p><button onClick={() => navigate('/produtos')} className="mt-4 bg-brand hover:bg-brand-dark text-white font-[900] py-4 px-10 rounded-xl shadow-brand/40 text-sm uppercase tracking-widest">Explorar Ofertas</button></div>
             )}
             {isClearFavoritesModalOpen && (
-              <div className="fixed inset-0 z-[300] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={() => setIsClearFavoritesModalOpen(false)}></div><div className="relative bg-white dark:bg-[#1e293b] w-full max-w-md rounded-[3rem] p-8 text-center"><div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mx-auto mb-8"><svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></div><h3 className="text-2xl font-[900] text-[#111827] dark:text-white mb-4">Limpar Favoritos?</h3><p className="text-gray-500 dark:text-gray-400 mb-10">Esta ação irá remover permanentemente todos os favoritos. Deseja continuar?</p><div className="grid grid-cols-2 gap-4"><button onClick={() => setIsClearFavoritesModalOpen(false)} className="py-4 font-[900] text-gray-500 hover:bg-gray-50 rounded-2xl">Cancelar</button><button onClick={clearAllFavorites} className="bg-red-500 text-white font-[900] py-4 rounded-2xl shadow-red-500/30">Limpar Tudo</button></div></div></div>
+              <div className="fixed inset-0 z-[300] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={() => setIsClearFavoritesModalOpen(false)}></div><div className="relative bg-white dark:bg-[#1e293b] w-full max-md rounded-[3rem] p-8 text-center"><div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mx-auto mb-8"><svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></div><h3 className="text-2xl font-[900] text-[#111827] dark:text-white mb-4">Limpar Favoritos?</h3><p className="text-gray-500 dark:text-gray-400 mb-10">Esta ação irá remover permanentemente todos os favoritos. Deseja continuar?</p><div className="grid grid-cols-2 gap-4"><button onClick={() => setIsClearFavoritesModalOpen(false)} className="py-4 font-[900] text-gray-500 hover:bg-gray-50 rounded-2xl">Cancelar</button><button onClick={clearAllFavorites} className="bg-red-500 text-white font-[900] py-4 rounded-2xl shadow-red-500/30">Limpar Tudo</button></div></div></div>
             )}
           </div>
         } />
         <Route path="/lista" element={
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-16">
             <div className="lg:col-span-7 xl:col-span-8 space-y-8 sm:space-y-12">
-              <div><h1 className="text-4xl sm:text-6xl font-[900] text-[#111827] dark:text-white tracking-tighter mb-2 sm:mb-4">Minha Lista</h1><p className="text-gray-500 dark:text-gray-400 font-[800] text-base sm:text-xl">Gerencie seus itens</p></div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 sm:gap-8">
+                <div><h1 className="text-4xl sm:text-6xl font-[900] text-[#111827] dark:text-white tracking-tighter mb-2 sm:mb-4">Minha Lista</h1><p className="text-gray-500 dark:text-gray-400 font-[800] text-base sm:text-xl">Gerencie seus itens</p></div>
+                {shoppingList.length > 0 && <button onClick={() => setIsClearListModalOpen(true)} className="bg-red-500 hover:bg-red-600 text-white font-black px-6 sm:px-10 py-3 sm:py-5 rounded-xl shadow-red-500/30 hover:scale-105 flex items-center justify-center space-x-2 transition-all"><svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg><span>Limpar Lista</span></button>}
+              </div>
               <div className="space-y-4 sm:space-y-8">
                 {shoppingList.length > 0 ? (
                   <div className="bg-white dark:bg-[#1e293b] rounded-2xl sm:rounded-[3.5rem] shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
@@ -828,6 +849,9 @@ const App: React.FC = () => {
             <div className="lg:col-span-5 xl:col-span-4 px-4 sm:px-0">
               <CartOptimizer items={shoppingList} allProducts={products} stores={stores} />
             </div>
+            {isClearListModalOpen && (
+              <div className="fixed inset-0 z-[300] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={() => setIsClearListModalOpen(false)}></div><div className="relative bg-white dark:bg-[#1e293b] w-full max-w-md rounded-[3rem] p-8 text-center"><div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mx-auto mb-8"><svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></div><h3 className="text-2xl font-[900] text-[#111827] dark:text-white mb-4">Limpar Lista?</h3><p className="text-gray-500 dark:text-gray-400 mb-10">Deseja remover todos os itens da sua lista de compras? Esta ação não pode ser desfeita.</p><div className="grid grid-cols-2 gap-4"><button onClick={() => setIsClearListModalOpen(false)} className="py-4 font-[900] text-gray-500 hover:bg-gray-50 rounded-2xl">Cancelar</button><button onClick={clearShoppingList} className="bg-red-500 text-white font-[900] py-4 rounded-2xl shadow-red-500/30">Limpar Lista</button></div></div></div>
+            )}
           </div>
         } />
         <Route path="*" element={<Navigate to="/" replace />} />
