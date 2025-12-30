@@ -44,16 +44,22 @@ export const getProducts = async (): Promise<Product[]> => {
     const promoPrice = parseFloat(row[6]?.replace(',', '.')) || 0;
     const normalPrice = parseFloat(row[4]?.replace(',', '.')) || 0;
 
+    // Galeria de imagens (row[2], row[9], row[10])
+    const images = [row[2], row[9], row[10]].filter(url => url && url.startsWith('http'));
+
     return {
       id: row[0],
       name: row[1],
       imageUrl: row[2],
+      images: images.length > 0 ? images : [row[2]],
       category: row[3],
       normalPrice: normalPrice,
       isPromo: isPromo && promoPrice > 0,
       promoPrice: promoPrice,
       supermarket: row[7],
-      lastUpdate: row[8]
+      lastUpdate: row[8],
+      brand: row[11] || '',
+      description: row[12] || ''
     };
   });
 };

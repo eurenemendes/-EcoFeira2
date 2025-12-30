@@ -71,6 +71,7 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
   const navigate = useNavigate();
   const { productId } = useParams();
   const product = products.find(p => p.id === productId);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   
   const comparisons = useMemo(() => {
     if (!product) return [];
@@ -84,6 +85,7 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
 
   const currentPrice = product.isPromo ? product.promoPrice : product.normalPrice;
   const store = stores.find(s => s.name === product.supermarket);
+  const images = product.images || [product.imageUrl];
 
   return (
     <div className="space-y-12 sm:space-y-16 animate-in fade-in slide-in-from-bottom-6 duration-700">
@@ -98,20 +100,66 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-20">
-        <div className="bg-white dark:bg-[#1e293b] rounded-[3rem] p-10 sm:p-20 flex items-center justify-center border border-gray-100 dark:border-gray-800 shadow-sm relative group overflow-hidden">
-          <div className="absolute inset-0 bg-brand/5 scale-0 group-hover:scale-100 transition-transform duration-1000 rounded-full blur-3xl"></div>
-          <img src={product.imageUrl} alt={product.name} className="relative z-10 w-full max-w-sm object-contain transition-transform duration-700 group-hover:scale-110" />
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-[#1e293b] rounded-[3rem] p-10 sm:p-20 flex items-center justify-center border border-gray-100 dark:border-gray-800 shadow-sm relative group overflow-hidden h-[400px] sm:h-[600px]">
+            <div className="absolute inset-0 bg-brand/5 scale-0 group-hover:scale-100 transition-transform duration-1000 rounded-full blur-3xl"></div>
+            
+            {/* Slider de Imagens */}
+            <div className="relative z-10 w-full h-full flex items-center justify-center">
+               <img 
+                 key={activeImageIndex}
+                 src={images[activeImageIndex]} 
+                 alt={product.name} 
+                 className="w-full max-w-sm h-full object-contain transition-all duration-700 animate-in fade-in zoom-in-95 group-hover:scale-105" 
+               />
+               
+               {images.length > 1 && (
+                 <>
+                   <button 
+                     onClick={() => setActiveImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
+                     className="absolute left-0 top-1/2 -translate-y-1/2 p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-full shadow-xl hover:scale-110 active:scale-95 transition-all text-gray-400 hover:text-brand"
+                   >
+                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
+                   </button>
+                   <button 
+                     onClick={() => setActiveImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
+                     className="absolute right-0 top-1/2 -translate-y-1/2 p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-full shadow-xl hover:scale-110 active:scale-95 transition-all text-gray-400 hover:text-brand"
+                   >
+                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" /></svg>
+                   </button>
+                 </>
+               )}
+            </div>
+            
+            {product.isPromo && (
+              <div className="absolute top-8 left-8 bg-red-500 text-white text-xs font-black px-6 py-2 rounded-2xl shadow-xl shadow-red-500/20 animate-pulse">
+                OFERTA IMPERDÍVEL
+              </div>
+            )}
+          </div>
           
-          {product.isPromo && (
-            <div className="absolute top-8 left-8 bg-red-500 text-white text-xs font-black px-6 py-2 rounded-2xl shadow-xl shadow-red-500/20 animate-pulse">
-              OFERTA IMPERDÍVEL
+          {/* Indicadores do Slider */}
+          {images.length > 1 && (
+            <div className="flex justify-center gap-4">
+              {images.map((img, idx) => (
+                <button 
+                  key={idx}
+                  onClick={() => setActiveImageIndex(idx)}
+                  className={`w-16 h-16 rounded-2xl border-2 transition-all p-2 overflow-hidden bg-white dark:bg-gray-800 ${activeImageIndex === idx ? 'border-brand scale-110 shadow-lg' : 'border-gray-100 dark:border-gray-800 opacity-60 hover:opacity-100'}`}
+                >
+                  <img src={img} className="w-full h-full object-contain" />
+                </button>
+              ))}
             </div>
           )}
         </div>
 
         <div className="flex flex-col justify-center space-y-8">
-          <div className="space-y-2">
-            <span className="text-xs font-black text-brand bg-brand/10 px-4 py-2 rounded-xl uppercase tracking-widest">{product.category}</span>
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <span className="text-[10px] font-black text-brand bg-brand/10 px-4 py-2 rounded-xl uppercase tracking-widest">{product.category}</span>
+              {product.brand && <span className="text-[10px] font-black text-orange-500 bg-orange-50 px-4 py-2 rounded-xl uppercase tracking-widest">Marca: {product.brand}</span>}
+            </div>
             <h1 className="text-4xl sm:text-6xl font-[1000] text-[#111827] dark:text-white tracking-tighter leading-none">{product.name}</h1>
           </div>
 
@@ -124,6 +172,13 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
               <Link to={`/supermercado/${store?.id}`} className="text-xl font-black text-gray-800 dark:text-gray-200 hover:text-brand transition-colors">{product.supermarket}</Link>
             </div>
           </div>
+
+          {product.description && (
+            <div className="bg-white dark:bg-[#1e293b] p-8 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm">
+              <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[2px] mb-4">Informações do Produto</h4>
+              <p className="text-gray-600 dark:text-gray-400 font-medium leading-relaxed">{product.description}</p>
+            </div>
+          )}
 
           <div className="bg-[#f8fafc] dark:bg-[#0f172a] p-10 rounded-[2.5rem] border border-gray-100 dark:border-gray-800 space-y-4">
             <div className="flex items-baseline space-x-2">
@@ -286,7 +341,7 @@ const StoreDetailView = ({
             onClick={() => navigate('/supermercados')}
             className="absolute top-6 left-6 flex items-center space-x-2 text-xs sm:text-sm font-[900] text-gray-400 hover:text-brand transition-colors group"
           >
-            <svg className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" />
             </svg>
             <span>Voltar aos Parceiros</span>
