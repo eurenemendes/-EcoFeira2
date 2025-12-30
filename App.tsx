@@ -73,6 +73,7 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
   const product = products.find(p => p.id === productId);
   
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
 
   const allImages = useMemo(() => {
     if (!product) return [];
@@ -220,11 +221,26 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
       </div>
 
       {product.description && (
-        <div className="bg-white dark:bg-[#1e293b] p-8 sm:p-16 rounded-[3rem] border border-gray-100 dark:border-gray-800 animate-in fade-in duration-700">
-           <h2 className="text-2xl sm:text-3xl font-black text-[#111827] dark:text-white tracking-tighter mb-6">Descrição do Produto</h2>
-           <p className="text-gray-500 dark:text-gray-400 text-base sm:text-xl font-medium leading-relaxed whitespace-pre-wrap">
-              {product.description}
-           </p>
+        <div className="bg-white dark:bg-[#1e293b] rounded-[3rem] border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm transition-all duration-500 animate-in fade-in duration-700">
+           <button 
+            onClick={() => setIsDescriptionOpen(!isDescriptionOpen)}
+            className="w-full p-8 sm:p-16 flex items-center justify-between text-left group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+           >
+              <h2 className="text-2xl sm:text-3xl font-black text-[#111827] dark:text-white tracking-tighter">Descrição do Produto</h2>
+              <div className={`p-4 rounded-2xl bg-gray-50 dark:bg-gray-800 text-gray-400 group-hover:text-brand transition-all duration-300 ${isDescriptionOpen ? 'rotate-180 bg-brand/10 text-brand' : ''}`}>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+           </button>
+           
+           <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isDescriptionOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="px-8 sm:px-16 pb-8 sm:pb-16 pt-0 border-t border-gray-50 dark:border-gray-800">
+                <p className="text-gray-500 dark:text-gray-400 text-base sm:text-xl font-medium leading-relaxed whitespace-pre-wrap mt-8">
+                    {product.description}
+                </p>
+              </div>
+           </div>
         </div>
       )}
 
@@ -274,9 +290,6 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
     </div>
   );
 };
-
-// ... Rest of the file App.tsx continues as before (StoreDetailView and App component)
-// (Copied here for completeness but only internal changes inside ProductDetailView were significant)
 
 // Componente extraído para evitar remontagem e perda de foco no input de busca
 const StoreDetailView = ({ 
@@ -535,7 +548,6 @@ const StoreDetailView = ({
   );
 };
 
-// ... Rest of App component (unchanged basically, but provided in the previous state)
 const App: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -867,7 +879,7 @@ const App: React.FC = () => {
                           <div key={idx} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group">
                             <button onClick={() => handleSearchSubmit(s)} className="flex items-center space-x-3 sm:space-x-4 flex-grow text-left">
                               <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 group-hover:bg-brand group-hover:text-white transition-all">
-                                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                               </div>
@@ -1060,7 +1072,7 @@ const App: React.FC = () => {
               <div><h1 className="text-4xl sm:text-6xl font-[900] text-[#111827] dark:text-white tracking-tighter mb-4">Parceiros</h1><p className="text-gray-500 dark:text-gray-400 font-[800] text-base sm:text-xl">Encontre as melhores ofertas próximas de você</p></div>
               <div className="relative w-full lg:w-[450px] group" ref={suggestionRef}>
                 <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800/40 rounded-xl sm:rounded-[2.5rem] -m-1"></div>
-                <div className="relative flex items-center bg-white dark:bg-[#1e293b] rounded-xl sm:rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm transition-all focus-within:ring-4 focus-within:ring-brand/10"><div className="pl-4 sm:pl-8 pr-2 sm:pr-4 text-gray-400"><svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></div><input type="text" placeholder="Nome ou Bairro..." value={storeSearchQuery} onChange={(e) => {setStoreSearchQuery(e.target.value); setShowStoreSuggestions(true);}} onFocus={() => setShowStoreSuggestions(true)} className="w-full bg-transparent border-none focus:ring-0 py-4 sm:py-6 text-base sm:text-xl font-bold dark:text-white outline-none" /><div className="p-2 pr-3 sm:pr-4">{storeSearchQuery && <button onClick={() => {setStoreSearchQuery(''); setShowStoreSuggestions(false);}} className="bg-red-500 text-white p-2.5 sm:p-4 rounded-lg shadow-red-500/20 hover:scale-105 transition-all"><svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg></button>}</div></div>
+                <div className="relative flex items-center bg-white dark:bg-[#1e293b] rounded-xl sm:rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm transition-all focus-within:ring-4 focus-within:ring-brand/10"><div className="pl-4 sm:pl-8 pr-2 sm:pr-4 text-gray-400"><svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></div><input type="text" placeholder="Nome ou Bairro..." value={storeSearchQuery} onChange={(e) => {setStoreSearchQuery(e.target.value); setShowStoreSuggestions(true);}} onFocus={() => setShowStoreSuggestions(true)} className="w-full bg-transparent border-none focus:ring-0 py-4 sm:py-6 text-base sm:text-xl font-bold dark:text-white outline-none" /><div className="p-2 pr-3 sm:pr-4">{storeSearchQuery && <button onClick={() => {setStoreSearchQuery(''); setShowStoreSuggestions(false);}} className="bg-red-500 text-white p-2.5 sm:p-4 rounded-lg shadow-red-500/20 hover:scale-105 transition-all"><svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg></button></div></div>
                 {showStoreSuggestions && storeSuggestions.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-4 bg-white dark:bg-[#1e293b] rounded-xl sm:rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden z-[200]">
                     <div className="p-3 bg-gray-50 border-b border-gray-100"><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sugestões EcoFeira</span></div>
