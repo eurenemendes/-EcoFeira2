@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Product } from '../types';
+import { slugify } from '../App';
 
 interface ProductCardProps {
   product: Product;
@@ -25,7 +26,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToList, 
   };
 
   const handleCardClick = () => {
-    navigate(`/produto/${product.id}`);
+    const storeSlug = slugify(product.supermarket);
+    const categorySlug = slugify(product.category);
+    const nameSlug = slugify(product.name);
+    navigate(`/${storeSlug}/${categorySlug}/${product.id}/${nameSlug}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -55,14 +59,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToList, 
           }}
           className={`absolute top-2 right-2 sm:top-4 sm:right-4 p-1.5 sm:p-2.5 rounded-lg sm:rounded-2xl shadow-lg transition-all z-20 hover:scale-110 active:scale-90 ${isFavorite ? 'bg-red-500 text-white shadow-red-500/30' : 'bg-white/80 dark:bg-gray-800/80 text-gray-400 backdrop-blur-md'}`}
         >
-          <svg className={`w-4 h-4 sm:w-5 sm:h-5 ${isFavorite ? 'fill-current' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={`w-4 h-4 sm:w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
         </button>
 
         {storeLogo && (
           <div className="absolute bottom-2 left-2 sm:bottom-4 sm:left-4 flex items-center bg-white/90 dark:bg-[#1e293b]/90 backdrop-blur-md rounded-lg sm:rounded-2xl p-1 pr-2 sm:p-1.5 sm:pr-4 shadow-lg border border-gray-100 dark:border-gray-700 z-10 transition-all group-hover:translate-x-1 group-hover:scale-105">
-            <div className="w-5 h-5 sm:w-8 sm:h-8 bg-white dark:bg-gray-800 rounded-md sm:rounded-xl p-0.5 sm:p-1 mr-1 sm:mr-2 shadow-sm flex items-center justify-center">
+            <div className="w-5 h-5 sm:w-8 h-8 bg-white dark:bg-gray-800 rounded-md sm:rounded-xl p-0.5 sm:p-1 mr-1 sm:mr-2 shadow-sm flex items-center justify-center">
               <img src={storeLogo} alt={product.supermarket} className="w-full h-full object-contain" />
             </div>
             <span className="text-[7px] sm:text-[10px] font-[1000] text-gray-700 dark:text-gray-100 uppercase tracking-wider truncate max-w-[50px] sm:max-w-[120px]">

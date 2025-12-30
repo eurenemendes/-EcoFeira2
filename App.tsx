@@ -11,6 +11,18 @@ import { CartOptimizer } from './components/CartOptimizer.tsx';
 const normalizeString = (str: string) => 
   str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
+export const slugify = (text: string) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-');
+};
+
 const setupDragScroll = (ref: React.RefObject<HTMLDivElement | null>) => {
   const el = ref.current;
   if (!el) return;
@@ -275,7 +287,10 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
                     </p>
                     <button 
                       onClick={() => {
-                        navigate(`/produto/${comp.id}`);
+                        const storeSlug = slugify(comp.supermarket);
+                        const categorySlug = slugify(comp.category);
+                        const nameSlug = slugify(comp.name);
+                        navigate(`/${storeSlug}/${categorySlug}/${comp.id}/${nameSlug}`);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                       className="text-[11px] font-black text-brand uppercase tracking-widest hover:underline mt-1 transition-all"
@@ -1117,7 +1132,7 @@ const App: React.FC = () => {
           />
         } />
         
-        <Route path="/produto/:productId" element={
+        <Route path="/:storeName/:categoryName/:productId/:productName" element={
           <ProductDetailView 
             products={products}
             stores={stores}
