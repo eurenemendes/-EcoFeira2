@@ -1,3 +1,4 @@
+
 import { Product, Supermarket, MainBanner, GridBanner } from '../types';
 
 const BASE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRU-bOKDig64F2nxlQDfkkcGSk9lRfxJsE31SeGbHa0q8qHW1WQO963zpfbbFaBhkuGScJsEuvIoZ8D/pubhtml';
@@ -44,6 +45,9 @@ export const getProducts = async (): Promise<Product[]> => {
     const promoPrice = parseFloat(row[6]?.replace(',', '.')) || 0;
     const normalPrice = parseFloat(row[4]?.replace(',', '.')) || 0;
 
+    // Novas colunas conforme solicitado
+    const additionalImages = [row[9], row[10]].filter(img => img && img.startsWith('http'));
+
     return {
       id: row[0],
       name: row[1],
@@ -53,7 +57,10 @@ export const getProducts = async (): Promise<Product[]> => {
       isPromo: isPromo && promoPrice > 0,
       promoPrice: promoPrice,
       supermarket: row[7],
-      lastUpdate: row[8]
+      lastUpdate: row[8],
+      additionalImages: additionalImages,
+      brand: row[11] || '',
+      description: row[12] || ''
     };
   });
 };

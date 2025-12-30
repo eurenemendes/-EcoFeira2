@@ -3,7 +3,10 @@ export interface Product {
   id: string;
   name: string;
   imageUrl: string;
+  additionalImages?: string[];
   category: string;
+  brand?: string;
+  description?: string;
   normalPrice: number;
   isPromo: boolean;
   promoPrice: number;

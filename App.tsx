@@ -72,6 +72,23 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
   const { productId } = useParams();
   const product = products.find(p => p.id === productId);
   
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  const allImages = useMemo(() => {
+    if (!product) return [];
+    return [product.imageUrl, ...(product.additionalImages || [])].filter(Boolean);
+  }, [product]);
+
+  const nextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveImageIndex((prev) => (prev + 1) % allImages.length);
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
+  };
+  
   const comparisons = useMemo(() => {
     if (!product) return [];
     const baseName = normalizeString(product.name);
@@ -98,20 +115,66 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-20">
-        <div className="bg-white dark:bg-[#1e293b] rounded-[3rem] p-10 sm:p-20 flex items-center justify-center border border-gray-100 dark:border-gray-800 shadow-sm relative group overflow-hidden">
+        <div className="bg-white dark:bg-[#1e293b] rounded-[3rem] p-6 sm:p-10 flex items-center justify-center border border-gray-100 dark:border-gray-800 shadow-sm relative group overflow-hidden h-[400px] sm:h-[600px]">
           <div className="absolute inset-0 bg-brand/5 scale-0 group-hover:scale-100 transition-transform duration-1000 rounded-full blur-3xl"></div>
-          <img src={product.imageUrl} alt={product.name} className="relative z-10 w-full max-w-sm object-contain transition-transform duration-700 group-hover:scale-110" />
+          
+          {/* Image Slider */}
+          <div className="relative z-10 w-full h-full flex items-center justify-center overflow-hidden">
+             {allImages.map((img, idx) => (
+                <img 
+                  key={idx}
+                  src={img} 
+                  alt={`${product.name} - ${idx + 1}`} 
+                  className={`absolute inset-0 w-full h-full object-contain p-4 sm:p-10 transition-all duration-700 ease-in-out ${
+                    idx === activeImageIndex ? 'opacity-100 translate-x-0 scale-100' : 
+                    idx < activeImageIndex ? 'opacity-0 -translate-x-full scale-90' : 'opacity-0 translate-x-full scale-90'
+                  }`}
+                />
+             ))}
+          </div>
+
+          {/* Slider Controls */}
+          {allImages.length > 1 && (
+            <>
+              <button 
+                onClick={prevImage}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:scale-110 active:scale-95 transition-all text-gray-400 hover:text-brand"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <button 
+                onClick={nextImage}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:scale-110 active:scale-95 transition-all text-gray-400 hover:text-brand"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" /></svg>
+              </button>
+              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex space-x-2">
+                {allImages.map((_, i) => (
+                  <button 
+                    key={i} 
+                    onClick={() => setActiveImageIndex(i)}
+                    className={`h-2 rounded-full transition-all duration-300 ${i === activeImageIndex ? 'bg-brand w-8' : 'bg-gray-200 dark:bg-gray-700 w-2'}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
           
           {product.isPromo && (
-            <div className="absolute top-8 left-8 bg-red-500 text-white text-xs font-black px-6 py-2 rounded-2xl shadow-xl shadow-red-500/20 animate-pulse">
+            <div className="absolute top-8 left-8 bg-red-500 text-white text-xs font-black px-6 py-2 rounded-2xl shadow-xl shadow-red-500/20 animate-pulse z-20">
               OFERTA IMPERDÍVEL
             </div>
           )}
         </div>
 
-        <div className="flex flex-col justify-center space-y-8">
-          <div className="space-y-2">
-            <span className="text-xs font-black text-brand bg-brand/10 px-4 py-2 rounded-xl uppercase tracking-widest">{product.category}</span>
+        <div className="flex flex-col justify-center space-y-6 sm:space-y-8">
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+               <span className="text-[10px] font-black text-brand bg-brand/10 px-3 py-1.5 rounded-lg uppercase tracking-widest">{product.category}</span>
+               {product.brand && (
+                 <span className="text-[10px] font-black text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-lg uppercase tracking-widest">Marca: {product.brand}</span>
+               )}
+            </div>
             <h1 className="text-4xl sm:text-6xl font-[1000] text-[#111827] dark:text-white tracking-tighter leading-none">{product.name}</h1>
           </div>
 
@@ -155,6 +218,15 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
           </div>
         </div>
       </div>
+
+      {product.description && (
+        <div className="bg-white dark:bg-[#1e293b] p-8 sm:p-16 rounded-[3rem] border border-gray-100 dark:border-gray-800 animate-in fade-in duration-700">
+           <h2 className="text-2xl sm:text-3xl font-black text-[#111827] dark:text-white tracking-tighter mb-6">Descrição do Produto</h2>
+           <p className="text-gray-500 dark:text-gray-400 text-base sm:text-xl font-medium leading-relaxed whitespace-pre-wrap">
+              {product.description}
+           </p>
+        </div>
+      )}
 
       <div className="space-y-10 pt-10">
         <div className="flex items-center justify-between">
@@ -202,6 +274,9 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
     </div>
   );
 };
+
+// ... Rest of the file App.tsx continues as before (StoreDetailView and App component)
+// (Copied here for completeness but only internal changes inside ProductDetailView were significant)
 
 // Componente extraído para evitar remontagem e perda de foco no input de busca
 const StoreDetailView = ({ 
@@ -267,7 +342,6 @@ const StoreDetailView = ({
     const q = normalizeString(searchQuery);
     const storeProducts = products.filter(p => p.supermarket === currentStore.name);
     
-    // MOSTRAR APENAS SUGESTÕES DE ITENS (PRODUTOS), SEM CATEGORIAS
     const names = storeProducts
       .filter(p => normalizeString(p.name).includes(q))
       .map(p => ({ label: p.name, type: 'produto' }));
@@ -286,7 +360,7 @@ const StoreDetailView = ({
             onClick={() => navigate('/supermercados')}
             className="absolute top-6 left-6 flex items-center space-x-2 text-xs sm:text-sm font-[900] text-gray-400 hover:text-brand transition-colors group"
           >
-            <svg className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" />
             </svg>
             <span>Voltar aos Parceiros</span>
@@ -461,6 +535,7 @@ const StoreDetailView = ({
   );
 };
 
+// ... Rest of App component (unchanged basically, but provided in the previous state)
 const App: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -885,7 +960,7 @@ const App: React.FC = () => {
                             <div key={idx} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group">
                               <button onClick={() => handleSearchSubmit(s)} className="flex items-center space-x-3 sm:space-x-4 flex-grow text-left">
                                 <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 group-hover:bg-brand group-hover:text-white transition-all">
-                                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                   </svg>
                                 </div>
