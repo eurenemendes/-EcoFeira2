@@ -3,15 +3,12 @@ export interface Product {
   id: string;
   name: string;
   imageUrl: string;
-  images: string[]; // Nova galeria de imagens
   category: string;
   normalPrice: number;
   isPromo: boolean;
   promoPrice: number;
   supermarket: string;
   lastUpdate: string;
-  brand: string; // Nova marca
-  description: string; // Nova descrição
 }
 
 export interface Supermarket {
