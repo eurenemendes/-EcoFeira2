@@ -92,9 +92,12 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
   const comparisons = useMemo(() => {
     if (!product) return [];
     const baseName = normalizeString(product.name);
+    // Filtrar por nome base, remover o produto atual e ordenar pelo menor preço
+    // Garantimos que os 4 mais baratos aparecem aqui
     return products
       .filter(p => normalizeString(p.name) === baseName && p.id !== product.id)
-      .sort((a, b) => (a.isPromo ? a.promoPrice : a.normalPrice) - (b.isPromo ? b.promoPrice : b.normalPrice));
+      .sort((a, b) => (a.isPromo ? a.promoPrice : a.normalPrice) - (b.isPromo ? b.promoPrice : b.normalPrice))
+      .slice(0, 4); 
   }, [product, products]);
 
   if (!product) return null;
@@ -118,7 +121,6 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
         <div className="bg-white dark:bg-[#1e293b] rounded-[3rem] p-6 sm:p-10 flex items-center justify-center border border-gray-100 dark:border-gray-800 shadow-sm relative group overflow-hidden h-[400px] sm:h-[600px]">
           <div className="absolute inset-0 bg-brand/5 scale-0 group-hover:scale-100 transition-transform duration-1000 rounded-full blur-3xl"></div>
           
-          {/* Image Slider */}
           <div className="relative z-10 w-full h-full flex items-center justify-center overflow-hidden">
              {allImages.map((img, idx) => (
                 <img 
@@ -133,7 +135,6 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
              ))}
           </div>
 
-          {/* Slider Controls */}
           {allImages.length > 1 && (
             <>
               <button 
@@ -229,36 +230,57 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
       )}
 
       <div className="space-y-10 pt-10">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between px-4 sm:px-0">
           <h2 className="text-3xl font-black text-[#111827] dark:text-white tracking-tighter">Compare Preços</h2>
-          <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{comparisons.length} outras opções encontradas</span>
+          <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{comparisons.length} opções exibidas</span>
         </div>
 
         {comparisons.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {comparisons.map((comp) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+            {comparisons.map((comp, idx) => {
               const compStore = stores.find(s => s.name === comp.supermarket);
-              const isCheaper = (comp.isPromo ? comp.promoPrice : comp.normalPrice) < currentPrice;
+              const compPrice = comp.isPromo ? comp.promoPrice : comp.normalPrice;
+              // A lista já está ordenada pelo menor preço, então o primeiro item (idx === 0) é o mais barato entre as opções
+              const isOverallCheapest = compPrice <= currentPrice && idx === 0;
+
               return (
-                <div key={comp.id} className="bg-white dark:bg-[#1e293b] p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800 flex items-center justify-between hover:shadow-xl transition-all group">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gray-50 dark:bg-[#0f172a] rounded-xl p-2 border border-gray-100 dark:border-gray-800 flex items-center justify-center">
+                <div 
+                  key={comp.id} 
+                  className={`relative bg-white dark:bg-[#1e293b]/60 p-6 sm:p-8 rounded-[2rem] border transition-all group overflow-visible flex items-center justify-between hover:shadow-2xl ${
+                    isOverallCheapest 
+                      ? 'border-brand/40 shadow-xl shadow-brand/10 dark:border-brand/30 ring-1 ring-brand/10' 
+                      : 'border-gray-100 dark:border-gray-800/60'
+                  }`}
+                >
+                  {isOverallCheapest && (
+                    <div className="absolute -top-3 left-6 z-20">
+                      <span className="bg-brand text-white text-[10px] font-black px-4 py-1.5 rounded-full shadow-lg shadow-brand/30 uppercase tracking-widest border border-white/20 animate-in zoom-in duration-500">
+                        Menor Preço
+                      </span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center space-x-6">
+                    <div className="w-14 h-14 bg-white dark:bg-[#0f172a] rounded-2xl flex-shrink-0 flex items-center justify-center p-2.5 shadow-sm border border-gray-100 dark:border-gray-800">
                       <img src={compStore?.logo} className="w-full h-full object-contain" />
                     </div>
                     <div>
-                      <p className="font-black text-gray-800 dark:text-gray-200">{comp.supermarket}</p>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{compStore?.neighborhood}</p>
+                      <p className="font-black text-lg sm:text-xl text-gray-800 dark:text-gray-100 leading-tight">{comp.supermarket}</p>
+                      <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1">{compStore?.neighborhood}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`text-2xl font-black tracking-tighter ${isCheaper ? 'text-emerald-500' : 'text-gray-900 dark:text-white'}`}>
-                      R$ {(comp.isPromo ? comp.promoPrice : comp.normalPrice).toFixed(2).replace('.', ',')}
+                    <p className={`text-3xl font-black tracking-tighter ${isOverallCheapest ? 'text-brand' : 'text-gray-900 dark:text-white'}`}>
+                      R$ {compPrice.toFixed(2).replace('.', ',')}
                     </p>
                     <button 
-                      onClick={() => navigate(`/produto/${comp.id}`)}
-                      className="text-[10px] font-black text-brand uppercase tracking-widest hover:underline"
+                      onClick={() => {
+                        navigate(`/produto/${comp.id}`);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="text-[11px] font-black text-brand uppercase tracking-widest hover:underline mt-1 transition-all"
                     >
-                      Ver detalhes
+                      VER DETALHES
                     </button>
                   </div>
                 </div>
@@ -274,9 +296,6 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
     </div>
   );
 };
-
-// ... Rest of the file App.tsx continues as before (StoreDetailView and App component)
-// (Copied here for completeness but only internal changes inside ProductDetailView were significant)
 
 // Componente extraído para evitar remontagem e perda de foco no input de busca
 const StoreDetailView = ({ 
@@ -535,7 +554,6 @@ const StoreDetailView = ({
   );
 };
 
-// ... Rest of App component (unchanged basically, but provided in the previous state)
 const App: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -820,7 +838,7 @@ const App: React.FC = () => {
                       onClick={() => openStoreDetail(store)}
                       className="flex items-center space-x-3 sm:space-x-4 bg-white/80 dark:bg-[#1e293b]/60 backdrop-blur-sm border border-gray-100 dark:border-gray-800 px-5 sm:px-8 py-3 sm:py-5 rounded-xl sm:rounded-2xl shadow-sm min-w-[200px] sm:min-w-[280px] cursor-pointer hover:bg-white transition-colors"
                     >
-                      <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-white flex items-center justify-center p-1.5 sm:p-2 shadow-sm border border-gray-100 dark:border-gray-800">
+                      <div className="w-8 h-8 sm:w-12 h-12 rounded-lg sm:rounded-xl bg-white flex items-center justify-center p-1.5 sm:p-2 shadow-sm border border-gray-100 dark:border-gray-800">
                         <img src={store.logo} alt={store.name} className="w-full h-full object-contain" />
                       </div>
                       <span className="text-[14px] sm:text-[18px] font-[900] text-gray-700 dark:text-gray-200 tracking-tight">{store.name}</span>
@@ -867,7 +885,7 @@ const App: React.FC = () => {
                           <div key={idx} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group">
                             <button onClick={() => handleSearchSubmit(s)} className="flex items-center space-x-3 sm:space-x-4 flex-grow text-left">
                               <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 group-hover:bg-brand group-hover:text-white transition-all">
-                                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                               </div>
@@ -1126,7 +1144,7 @@ const App: React.FC = () => {
               <div className="text-center py-24 sm:py-40 bg-white dark:bg-[#1e293b] rounded-2xl sm:rounded-[4rem] border-2 border-dashed border-gray-100 flex flex-col items-center px-4"><div className="w-20 h-20 sm:w-32 sm:h-32 bg-red-50 rounded-2xl flex items-center justify-center mb-6 shadow-inner"><svg className="w-10 h-10 sm:w-16 sm:h-16 text-red-200" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg></div><p className="text-gray-400 font-[800] text-xl tracking-tight mb-4">Lista de favoritos vazia</p><button onClick={() => navigate('/produtos')} className="mt-4 bg-brand hover:bg-brand-dark text-white font-[900] py-4 px-10 rounded-xl shadow-brand/40 text-sm uppercase tracking-widest">Explorar Ofertas</button></div>
             )}
             {isClearFavoritesModalOpen && (
-              <div className="fixed inset-0 z-[300] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={() => setIsClearFavoritesModalOpen(false)}></div><div className="relative bg-white dark:bg-[#1e293b] w-full max-md rounded-[3rem] p-8 text-center"><div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mx-auto mb-8"><svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></div><h3 className="text-2xl font-[900] text-[#111827] dark:text-white mb-4">Limpar Favoritos?</h3><p className="text-gray-500 dark:text-gray-400 mb-10">Esta ação irá remover permanentemente todos os favoritos. Deseja continuar?</p><div className="grid grid-cols-2 gap-4"><button onClick={() => setIsClearFavoritesModalOpen(false)} className="py-4 font-[900] text-gray-500 hover:bg-gray-50 rounded-2xl">Cancelar</button><button onClick={clearAllFavorites} className="bg-red-500 text-white font-[900] py-4 rounded-2xl shadow-red-500/30">Limpar Tudo</button></div></div></div>
+              <div className="fixed inset-0 z-[300] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={() => setIsClearFavoritesModalOpen(false)}></div><div className="relative bg-white dark:bg-[#1e293b] w-full max-md rounded-[3rem] p-8 text-center"><div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mx-auto mb-8"><svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></div><h3 className="text-2xl font-[900] text-[#111827] dark:text-white mb-4">Limpar Favoritos?</h3><p className="text-gray-500 dark:text-gray-400 mb-10">Esta ação irá remover permanentemente todos os favoritos. Deseja continuar?</p><div className="grid grid-cols-2 gap-4"><button onClick={() => setIsClearFavoritesModalOpen(false)} className="py-4 font-[900] text-gray-500 hover:bg-gray-50 rounded-2xl">Cancelar</button><button onClick={clearAllFavorites} className="bg-brand text-white font-[900] py-4 rounded-2xl shadow-brand/30">Limpar Tudo</button></div></div></div>
             )}
           </div>
         } />
@@ -1160,7 +1178,7 @@ const App: React.FC = () => {
               <CartOptimizer items={shoppingList} allProducts={products} stores={stores} />
             </div>
             {isClearListModalOpen && (
-              <div className="fixed inset-0 z-[300] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={() => setIsClearListModalOpen(false)}></div><div className="relative bg-white dark:bg-[#1e293b] w-full max-md rounded-[3rem] p-8 text-center"><div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mx-auto mb-8"><svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></div><h3 className="text-2xl font-[900] text-[#111827] dark:text-white mb-4">Limpar Lista?</h3><p className="text-gray-500 dark:text-gray-400 mb-10">Deseja remover todos os itens da sua lista de compras? Esta ação não pode ser desfeita.</p><div className="grid grid-cols-2 gap-4"><button onClick={() => setIsClearListModalOpen(false)} className="py-4 font-[900] text-gray-500 hover:bg-gray-50 rounded-2xl">Cancelar</button><button onClick={clearShoppingList} className="bg-red-500 text-white font-[900] py-4 rounded-2xl shadow-red-500/30">Limpar Lista</button></div></div></div>
+              <div className="fixed inset-0 z-[300] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={() => setIsClearListModalOpen(false)}></div><div className="relative bg-white dark:bg-[#1e293b] w-full max-md rounded-[3rem] p-8 text-center"><div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mx-auto mb-8"><svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></div><h3 className="text-2xl font-[900] text-[#111827] dark:text-white mb-4">Limpar Lista?</h3><p className="text-gray-500 dark:text-gray-400 mb-10">Deseja remover todos os itens da sua lista de compras? Esta ação não pode ser desfeita.</p><div className="grid grid-cols-2 gap-4"><button onClick={() => setIsClearListModalOpen(false)} className="py-4 font-[900] text-gray-500 hover:bg-gray-50 rounded-2xl">Cancelar</button><button onClick={clearShoppingList} className="bg-brand text-white font-[900] py-4 rounded-2xl shadow-brand/30">Limpar Lista</button></div></div></div>
             )}
           </div>
         } />
