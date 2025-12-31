@@ -72,7 +72,6 @@ const setupDragScroll = (ref: React.RefObject<HTMLDivElement | null>) => {
   };
 };
 
-// Componente extraído para evitar remontagem e perda de foco
 const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToList }: { 
   products: Product[], 
   stores: Supermarket[], 
@@ -104,8 +103,6 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
   const comparisons = useMemo(() => {
     if (!product) return [];
     const baseName = normalizeString(product.name);
-    // Filtrar por nome base, remover o produto atual e ordenar pelo menor preço
-    // Garantimos que os 4 mais baratos aparecem aqui
     return products
       .filter(p => normalizeString(p.name) === baseName && p.id !== product.id)
       .sort((a, b) => (a.isPromo ? a.promoPrice : a.normalPrice) - (b.isPromo ? b.promoPrice : b.normalPrice))
@@ -151,13 +148,13 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
             <>
               <button 
                 onClick={prevImage}
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:scale-110 active:scale-95 transition-all text-gray-400 hover:text-brand"
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:scale-110 active:scale-90 transition-all text-gray-400 hover:text-brand"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
               </button>
               <button 
                 onClick={nextImage}
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:scale-110 active:scale-95 transition-all text-gray-400 hover:text-brand"
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:scale-110 active:scale-90 transition-all text-gray-400 hover:text-brand"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" /></svg>
               </button>
@@ -252,7 +249,6 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
             {comparisons.map((comp, idx) => {
               const compStore = stores.find(s => s.name === comp.supermarket);
               const compPrice = comp.isPromo ? comp.promoPrice : comp.normalPrice;
-              // A lista já está ordenada pelo menor preço, então o primeiro item (idx === 0) é o mais barato entre as opções
               const isOverallCheapest = compPrice <= currentPrice && idx === 0;
 
               return (
@@ -312,7 +308,6 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
   );
 };
 
-// Componente extraído para evitar remontagem e perda de foco no input de busca
 const StoreDetailView = ({ 
   products, 
   stores, 
@@ -498,7 +493,7 @@ const StoreDetailView = ({
                 )}
               </div>
 
-              <div className="flex-shrink-0 flex items-center bg-white dark:bg-[#1e293b] p-2.5 rounded-xl sm:rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm">
+              <div className="flex-shrink-0 flex items-center bg-white dark:bg-[#1e293b] p-2.5 rounded-xl sm:rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm">
                 <div className="flex items-center px-4 sm:px-6 space-x-3 text-gray-400">
                   <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
@@ -582,7 +577,6 @@ const App: React.FC = () => {
   const [popularSuggestions, setPopularSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Histórico de pesquisas recentes
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     const saved = localStorage.getItem('ecofeira_recent_searches');
     return saved ? JSON.parse(saved) : [];
@@ -605,7 +599,6 @@ const App: React.FC = () => {
   const [sortBy, setSortBy] = useState<'none' | 'price-asc' | 'price-desc'>('none');
   const [onlyPromos, setOnlyPromos] = useState(false);
 
-  // Modal States
   const [isClearFavoritesModalOpen, setIsClearFavoritesModalOpen] = useState(false);
   const [isClearListModalOpen, setIsClearListModalOpen] = useState(false);
 
@@ -845,24 +838,28 @@ const App: React.FC = () => {
                   Os melhores preços de <span className="text-gray-900 dark:text-white font-black">{products.length} produtos</span> em {stores.length} supermercados locais, incluindo {products.filter(p => p.isPromo).length} promoções imperdíveis.
                 </p>
               </div>
-              <div className="relative pt-8 sm:pt-12 z-10 marquee-mask overflow-hidden py-6 sm:py-10 select-none pointer-events-none cursor-default">
-                <div className="flex animate-marquee whitespace-nowrap gap-4 sm:gap-6 w-max">
-                  {stores.length > 0 ? [...stores, ...stores].map((store, idx) => (
-                    <div 
-                      key={`${store.id}-${idx}`} 
-                      onClick={() => openStoreDetail(store)}
-                      className="flex items-center space-x-3 sm:space-x-4 bg-white/80 dark:bg-[#1e293b]/60 backdrop-blur-sm border border-gray-100 dark:border-gray-800 px-5 sm:px-8 py-3 sm:py-5 rounded-xl sm:rounded-2xl shadow-sm min-w-[200px] sm:min-w-[280px] cursor-pointer hover:bg-white transition-colors"
-                    >
-                      <div className="w-8 h-8 sm:w-12 h-12 rounded-lg sm:rounded-xl bg-white flex items-center justify-center p-1.5 sm:p-2 shadow-sm border border-gray-100 dark:border-gray-800">
-                        <img src={store.logo} alt={store.name} className="w-full h-full object-contain" />
-                      </div>
-                      <span className="text-[14px] sm:text-[18px] font-[900] text-gray-700 dark:text-gray-200 tracking-tight">{store.name}</span>
+            </div>
+
+            {/* Marquee Container Outside Center Constraints */}
+            <div className="relative w-screen left-1/2 -translate-x-1/2 marquee-mask overflow-hidden py-6 sm:py-10 select-none">
+              <div className="flex animate-marquee whitespace-nowrap gap-10 sm:gap-24 w-max items-center">
+                {stores.length > 0 ? [...stores, ...stores, ...stores].map((store, idx) => (
+                  <div 
+                    key={`${store.id}-${idx}`} 
+                    className="flex flex-col items-center space-y-4 pointer-events-none"
+                  >
+                    <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-[1.5rem] sm:rounded-[2.2rem] bg-white dark:bg-[#1e293b] flex items-center justify-center p-3.5 sm:p-5 shadow-2xl border border-gray-100/50 dark:border-gray-800/50">
+                      <img src={store.logo} alt={store.name} className="w-full h-full object-contain" />
                     </div>
-                  )) : null}
-                </div>
+                    <span className="text-[10px] sm:text-base font-black text-gray-800 dark:text-white tracking-tight text-center uppercase whitespace-nowrap">
+                      {store.name}
+                    </span>
+                  </div>
+                )) : null}
               </div>
             </div>
-            <div className="max-w-4xl mx-auto space-y-8 sm:space-y-10 px-4 -mt-8 sm:-mt-16 mb-8 sm:mb-16">
+
+            <div className="max-w-4xl mx-auto space-y-8 sm:space-y-10 px-4 mb-8 sm:mb-16">
               <div className="relative group" ref={searchSuggestionRef}>
                 <div className="absolute inset-0 bg-brand/10 blur-3xl rounded-full scale-90 group-focus-within:scale-100 transition-transform duration-700"></div>
                 <div className="relative flex bg-white dark:bg-[#1e293b] rounded-2xl sm:rounded-[2.5rem] p-2 sm:p-3 shadow-2xl shadow-gray-200/40 dark:shadow-none border border-gray-100 dark:border-gray-800 transition-all focus-within:ring-2 focus-within:ring-brand/20">
@@ -1093,7 +1090,7 @@ const App: React.FC = () => {
               <div><h1 className="text-4xl sm:text-6xl font-[900] text-[#111827] dark:text-white tracking-tighter mb-4">Parceiros</h1><p className="text-gray-500 dark:text-gray-400 font-[800] text-base sm:text-xl">Encontre as melhores ofertas próximas de você</p></div>
               <div className="relative w-full lg:w-[450px] group" ref={suggestionRef}>
                 <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800/40 rounded-xl sm:rounded-[2.5rem] -m-1"></div>
-                <div className="relative flex items-center bg-white dark:bg-[#1e293b] rounded-xl sm:rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm transition-all focus-within:ring-4 focus-within:ring-brand/10"><div className="pl-4 sm:pl-8 pr-2 sm:pr-4 text-gray-400"><svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></div><input type="text" placeholder="Nome ou Bairro..." value={storeSearchQuery} onChange={(e) => {setStoreSearchQuery(e.target.value); setShowStoreSuggestions(true);}} onFocus={() => setShowStoreSuggestions(true)} className="w-full bg-transparent border-none focus:ring-0 py-4 sm:py-6 text-base sm:text-xl font-bold dark:text-white outline-none" /><div className="p-2 pr-3 sm:pr-4">{storeSearchQuery && <button onClick={() => {setStoreSearchQuery(''); setShowStoreSuggestions(false);}} className="bg-red-500 text-white p-2.5 sm:p-4 rounded-lg shadow-red-500/20 hover:scale-105 transition-all"><svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg></button>}</div></div>
+                <div className="relative flex items-center bg-white dark:bg-[#1e293b] rounded-xl sm:rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm transition-all focus-within:ring-4 focus-within:ring-brand/10"><div className="pl-4 sm:pl-8 pr-2 sm:pr-4 text-gray-400"><svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></div><input type="text" placeholder="Nome ou Bairro..." value={storeSearchQuery} onChange={(e) => {setStoreSearchQuery(e.target.value); setShowStoreSuggestions(true);}} onFocus={() => setShowStoreSuggestions(true)} className="w-full bg-transparent border-none focus:ring-0 py-4 sm:py-6 text-base sm:text-xl font-bold dark:text-white outline-none" /><div className="p-2 pr-3 sm:pr-4">{storeSearchQuery && <button onClick={() => {setStoreSearchQuery(''); setShowStoreSuggestions(false);}} className="bg-red-500 text-white p-2.5 sm:p-4 rounded-lg shadow-red-500/20 hover:scale-105 transition-all"><svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg></button></div></div>
                 {showStoreSuggestions && storeSuggestions.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-4 bg-white dark:bg-[#1e293b] rounded-xl sm:rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden z-[200]">
                     <div className="p-3 bg-gray-50 border-b border-gray-100"><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sugestões EcoFeira</span></div>
