@@ -75,8 +75,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToList, 
         <img 
           src={product.imageUrl} 
           alt={product.name}
-          className="absolute inset-0 w-full h-full object-contain p-4 sm:p-8 transition-transform duration-700 group-hover:scale-110"
+          className="absolute inset-0 w-full h-full object-contain p-4 sm:p-8 transition-transform duration-700 group-hover:scale-110 pointer-events-none select-none"
           loading="lazy"
+          draggable={false}
+          onContextMenu={(e) => e.preventDefault()}
         />
         
         {product.isPromo && discount > 0 && (
@@ -124,7 +126,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToList, 
         {storeLogo && (
           <div className="absolute bottom-2 left-2 sm:bottom-4 sm:left-4 flex items-center bg-white/90 dark:bg-[#1e293b]/90 backdrop-blur-md rounded-lg sm:rounded-2xl p-1 pr-2 sm:p-1.5 sm:pr-4 shadow-lg border border-gray-100 dark:border-gray-700 z-10 transition-all group-hover:translate-x-1 group-hover:scale-105">
             <div className="w-5 h-5 sm:w-8 h-8 bg-white dark:bg-gray-800 rounded-md sm:rounded-xl p-0.5 sm:p-1 mr-1 sm:mr-2 shadow-sm flex items-center justify-center">
-              <img src={storeLogo} alt={product.supermarket} className="w-full h-full object-contain" />
+              <img 
+                src={storeLogo} 
+                alt={product.supermarket} 
+                className="w-full h-full object-contain pointer-events-none" 
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
+              />
             </div>
             <span className="text-[7px] sm:text-[10px] font-[1000] text-gray-700 dark:text-gray-100 uppercase tracking-wider truncate max-w-[50px] sm:max-w-[120px]">
               {product.supermarket}

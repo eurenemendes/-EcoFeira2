@@ -117,8 +117,14 @@ export const CartOptimizer: React.FC<CartOptimizerProps> = ({ items, allProducts
               className={`relative flex items-center p-8 rounded-[2rem] transition-all duration-500 border ${res.isBestOption ? 'bg-brand/5 border-brand/20' : 'bg-gray-50/50 dark:bg-[#0f172a]/50 border-gray-50 dark:border-gray-800/40 opacity-90'}`}
             >
               <div className="flex items-center space-x-6 w-full">
-                <div className="w-16 h-16 bg-white dark:bg-[#1e293b] rounded-2xl flex-shrink-0 flex items-center justify-center p-2.5 shadow-sm border border-gray-100 dark:border-gray-800">
-                  <img src={res.logo} alt={res.storeName} className="w-full h-full object-contain" />
+                <div className="w-16 h-16 bg-white dark:bg-[#1e293b] rounded-2xl flex-shrink-0 flex items-center justify-center p-2.5 shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+                  <img 
+                    src={res.logo} 
+                    alt={res.storeName} 
+                    className="w-full h-full object-contain pointer-events-none" 
+                    draggable={false}
+                    onContextMenu={(e) => e.preventDefault()}
+                  />
                 </div>
                 
                 <div className="flex-grow">
@@ -186,7 +192,7 @@ export const CartOptimizer: React.FC<CartOptimizerProps> = ({ items, allProducts
             <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-8 sm:p-10 space-y-4">
               {modalItems.length > 0 ? (
                 modalItems.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-6 bg-gray-50/50 dark:bg-[#0f172a]/30 rounded-2xl border border-gray-50 dark:border-gray-800/40">
+                  <div key={idx} className="flex items-center justify-between p-6 bg-gray-50/50 dark:bg-[#0f172a]/30 rounded-2xl border border-gray-100 dark:border-gray-800/40">
                     <div className="flex items-center space-x-4">
                       <div className="bg-brand/10 text-brand p-2 rounded-xl">
                         <span className="text-sm font-black">{item.quantity}x</span>

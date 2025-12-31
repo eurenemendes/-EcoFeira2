@@ -136,10 +136,12 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
                   key={idx}
                   src={img} 
                   alt={`${product.name} - ${idx + 1}`} 
-                  className={`absolute inset-0 w-full h-full object-contain p-4 sm:p-10 transition-all duration-700 ease-in-out ${
+                  className={`absolute inset-0 w-full h-full object-contain p-4 sm:p-10 transition-all duration-700 ease-in-out pointer-events-none select-none ${
                     idx === activeImageIndex ? 'opacity-100 translate-x-0 scale-100' : 
                     idx < activeImageIndex ? 'opacity-0 -translate-x-full scale-90' : 'opacity-0 translate-x-full scale-90'
                   }`}
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
                 />
              ))}
           </div>
@@ -190,7 +192,12 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
 
           <div className="flex items-center space-x-4">
             <div className="w-14 h-14 bg-white rounded-2xl p-2 shadow-sm border border-gray-100 flex items-center justify-center overflow-hidden">
-              <img src={store?.logo} className="w-full h-full object-contain" />
+              <img 
+                src={store?.logo} 
+                className="w-full h-full object-contain pointer-events-none" 
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
+              />
             </div>
             <div>
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Vendido por</p>
@@ -219,7 +226,7 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
             </button>
             <button 
               onClick={() => toggleFavorite(product.id)}
-              className={`p-6 rounded-3xl border-2 transition-all flex items-center justify-center ${favorites.includes(product.id) ? 'bg-red-500 border-red-500 text-white shadow-xl shadow-red-500/20' : 'border-gray-100 dark:border-gray-800 text-gray-400 hover:border-red-200'}`}
+              className={`p-6 rounded-3xl border-2 transition-all flex items-center justify-center ${favorites.includes(product.id) ? 'bg-red-50 border-red-500 text-white shadow-xl shadow-red-500/20' : 'border-gray-100 dark:border-gray-800 text-gray-400 hover:border-red-200'}`}
             >
               <svg className={`w-6 h-6 ${favorites.includes(product.id) ? 'fill-current' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -270,7 +277,12 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
                   
                   <div className="flex items-center space-x-6">
                     <div className="w-14 h-14 bg-white dark:bg-[#0f172a] rounded-2xl flex-shrink-0 flex items-center justify-center p-2.5 shadow-sm border border-gray-100 dark:border-gray-800">
-                      <img src={compStore?.logo} className="w-full h-full object-contain" />
+                      <img 
+                        src={compStore?.logo} 
+                        className="w-full h-full object-contain pointer-events-none" 
+                        draggable={false}
+                        onContextMenu={(e) => e.preventDefault()}
+                      />
                     </div>
                     <div>
                       <p className="font-black text-lg sm:text-xl text-gray-800 dark:text-gray-100 leading-tight">{comp.supermarket}</p>
@@ -346,6 +358,7 @@ const StoreDetailView = ({
   const navigate = useNavigate();
   const { storeId } = useParams();
   const currentStore = stores.find(s => s.id === storeId);
+  const [isShared, setIsShared] = useState(false);
   
   const storeDetailProducts = useMemo(() => {
     if (!currentStore) return [];
@@ -365,6 +378,29 @@ const StoreDetailView = ({
     }
     return result;
   }, [products, currentStore, searchQuery, selectedCategory, sortBy]);
+
+  const handleShareStore = async () => {
+    const baseUrl = window.location.href.split('#')[0].replace(/\/$/, "");
+    const shareUrl = `${baseUrl}/#/supermercado/${currentStore?.id}`;
+    
+    const shareData = {
+      title: `EcoFeira - ${currentStore?.name}`,
+      text: `Confira as ofertas do ${currentStore?.name} no EcoFeira!`,
+      url: shareUrl,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        setIsShared(true);
+        setTimeout(() => setIsShared(false), 2000);
+      }
+    } catch (err) {
+      console.error('Erro ao compartilhar loja:', err);
+    }
+  };
 
   const storeSearchSuggestions = useMemo(() => {
     if (!currentStore || !searchQuery || searchQuery.length < 2) return [];
@@ -397,7 +433,13 @@ const StoreDetailView = ({
 
           <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-12 mt-8 lg:mt-0 w-full lg:w-auto">
             <div className="w-24 h-24 sm:w-44 sm:h-44 bg-[#f8fafc] dark:bg-[#0f172a] rounded-xl sm:rounded-[2.8rem] flex items-center justify-center p-4 sm:p-10 border border-gray-100 dark:border-gray-800 shadow-inner">
-              <img src={currentStore.logo} alt={currentStore.name} className="w-full h-full object-contain" />
+              <img 
+                src={currentStore.logo} 
+                alt={currentStore.name} 
+                className="w-full h-full object-contain pointer-events-none" 
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
+              />
             </div>
             <div className="text-center sm:text-left space-y-4">
               <div className="space-y-1 sm:space-y-2">
@@ -442,6 +484,26 @@ const StoreDetailView = ({
                 <span>Ver Encarte Digital</span>
               </a>
             )}
+            <button 
+              onClick={handleShareStore}
+              className={`w-full lg:w-auto flex items-center justify-center space-x-3 font-[900] py-4 sm:py-6 px-10 rounded-xl sm:rounded-[2rem] transition-all text-sm uppercase tracking-wider border-2 relative overflow-hidden ${isShared ? 'bg-brand border-brand text-white' : 'bg-transparent border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand'}`}
+            >
+              {isShared ? (
+                <>
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 animate-success-pop" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Copiado!</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                  <span>Compartilhar Loja</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
 
@@ -848,7 +910,13 @@ const App: React.FC = () => {
                     className="flex flex-col items-center space-y-4 pointer-events-none"
                   >
                     <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-[1.5rem] sm:rounded-[2.2rem] bg-white dark:bg-[#1e293b] flex items-center justify-center p-3.5 sm:p-5 shadow-2xl border border-gray-100/50 dark:border-gray-800/50">
-                      <img src={store.logo} alt={store.name} className="w-full h-full object-contain" />
+                      <img 
+                        src={store.logo} 
+                        alt={store.name} 
+                        className="w-full h-full object-contain pointer-events-none" 
+                        draggable={false}
+                        onContextMenu={(e) => e.preventDefault()}
+                      />
                     </div>
                     <span className="text-[10px] sm:text-base font-black text-gray-800 dark:text-white tracking-tight text-center uppercase whitespace-nowrap">
                       {store.name}
@@ -1058,7 +1126,7 @@ const App: React.FC = () => {
                       const storeData = stores.find(s => s.name === store);
                       return (
                         <button key={store} onClick={() => setSelectedSupermarket(store)} className={`flex-shrink-0 px-6 sm:px-10 py-3 sm:py-4 rounded-xl sm:rounded-[1.5rem] text-xs sm:text-[15px] font-[800] transition-all shadow-sm flex items-center space-x-2 sm:space-x-3 ${selectedSupermarket === store ? 'bg-brand text-white shadow-xl shadow-brand/30 scale-105' : 'bg-white dark:bg-[#1e293b] text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-gray-800 hover:border-brand'}`}>
-                          {store !== 'Todos' && storeData?.logo && <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-md overflow-hidden bg-white flex items-center justify-center p-0.5 ${selectedSupermarket === store ? 'opacity-100' : 'opacity-80'}`}><img src={storeData.logo} alt={store} className="w-full h-full object-contain" /></div>}
+                          {store !== 'Todos' && storeData?.logo && <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-md overflow-hidden bg-white flex items-center justify-center p-0.5 ${selectedSupermarket === store ? 'opacity-100' : 'opacity-80'}`}><img src={storeData.logo} alt={store} className="w-full h-full object-contain pointer-events-none" draggable={false} onContextMenu={(e) => e.preventDefault()} /></div>}
                           <span>{store}</span>
                         </button>
                       );
@@ -1080,7 +1148,7 @@ const App: React.FC = () => {
                           const ad = gridBanners[idx % gridBanners.length];
                           return (
                             <>
-                              <div className="absolute inset-0"><img src={ad.imageUrl} className="w-full h-full object-cover opacity-20 group-hover:scale-110 transition-transform duration-[4000ms]" /><div className="absolute inset-0 bg-gradient-to-r from-[#111827] via-[#111827]/80 to-transparent"></div></div>
+                              <div className="absolute inset-0"><img src={ad.imageUrl} className="w-full h-full object-cover opacity-20 group-hover:scale-110 transition-transform duration-[4000ms] pointer-events-none" draggable={false} onContextMenu={(e) => e.preventDefault()} /><div className="absolute inset-0 bg-gradient-to-r from-[#111827] via-[#111827]/80 to-transparent"></div></div>
                               <div className="relative z-10 space-y-10 max-w-lg"><span className="bg-brand text-white text-[11px] font-[900] px-6 py-2 rounded-xl uppercase tracking-widest">{ad.tag}</span><h4 className="text-5xl font-[900] text-white leading-tight tracking-tight">{ad.title}</h4><p className="text-white/60 font-bold text-lg leading-relaxed">{ad.subtitle}</p><button className="bg-white text-[#111827] font-[900] py-6 px-14 rounded-2xl shadow-2xl hover:scale-105 transition-all text-sm uppercase tracking-wider">{ad.cta}</button></div>
                             </>
                           )
@@ -1137,7 +1205,7 @@ const App: React.FC = () => {
                         className="w-full flex items-center space-x-4 p-4 hover:bg-brand/5 border-b border-gray-50 last:border-none group text-left"
                       >
                         <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1.5 shadow-sm border border-gray-100 group-hover:scale-105">
-                          <img src={s.logo} alt={s.name} className="w-full h-full object-contain" />
+                          <img src={s.logo} alt={s.name} className="w-full h-full object-contain pointer-events-none" draggable={false} onContextMenu={(e) => e.preventDefault()} />
                         </div>
                         <div>
                           <p className="text-base font-black text-gray-900 leading-none">{s.name}</p>
@@ -1150,9 +1218,9 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-16">
-              <div className="bg-[#1e293b] relative rounded-2xl sm:rounded-[3.5rem] overflow-hidden flex flex-col justify-center items-center text-center p-6 sm:p-16 group shadow-2xl min-h-[300px] sm:min-h-[520px] col-span-2 lg:col-span-1"><div className="absolute inset-0"><img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80" className="w-full h-full object-cover opacity-20 group-hover:scale-110 transition-transform duration-[4000ms]" /></div><div className="relative z-10 space-y-4 sm:space-y-12"><div className="w-12 h-12 sm:w-24 sm:h-24 bg-brand/20 backdrop-blur-md rounded-xl sm:rounded-[2.2rem] flex items-center justify-center mx-auto shadow-2xl"><svg className="w-6 h-6 sm:w-12 sm:h-12 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.167a2.407 2.407 0 00-2.454-1.554H2.03a1.76 1.76 0 01-1.76-1.76V8.291c0-.972.788-1.76 1.76-1.76h.542a2.407 2.407 0 002.454-1.554l2.147-6.167A1.76 1.76 0 0111 5.882z" /></svg></div><div className="space-y-2 sm:space-y-6"><span className="bg-brand text-white text-[8px] sm:text-[12px] font-[900] px-3 sm:px-7 py-1.5 sm:py-2.5 rounded-lg uppercase tracking-widest">ECOFEIRA PROMO</span><h4 className="text-xl sm:text-5xl font-[900] text-white leading-tight tracking-tight">Sua Marca em Destaque</h4></div><button className="bg-white text-[#111827] font-[900] py-3 sm:py-6 px-6 sm:px-16 rounded-xl sm:rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all text-[10px] sm:text-base uppercase tracking-wider">Saber Mais</button></div></div>
+              <div className="bg-[#1e293b] relative rounded-2xl sm:rounded-[3.5rem] overflow-hidden flex flex-col justify-center items-center text-center p-6 sm:p-16 group shadow-2xl min-h-[300px] sm:min-h-[520px] col-span-2 lg:col-span-1"><div className="absolute inset-0"><img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80" className="w-full h-full object-cover opacity-20 group-hover:scale-110 transition-transform duration-[4000ms] pointer-events-none" draggable={false} onContextMenu={(e) => e.preventDefault()} /></div><div className="relative z-10 space-y-4 sm:space-y-12"><div className="w-12 h-12 sm:w-24 sm:h-24 bg-brand/20 backdrop-blur-md rounded-xl sm:rounded-[2.2rem] flex items-center justify-center mx-auto shadow-2xl"><svg className="w-6 h-6 sm:w-12 sm:h-12 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.167a2.407 2.407 0 00-2.454-1.554H2.03a1.76 1.76 0 01-1.76-1.76V8.291c0-.972.788-1.76 1.76-1.76h.542a2.407 2.407 0 002.454-1.554l2.147-6.167A1.76 1.76 0 0111 5.882z" /></svg></div><div className="space-y-2 sm:space-y-6"><span className="bg-brand text-white text-[8px] sm:text-[12px] font-[900] px-3 sm:px-7 py-1.5 sm:py-2.5 rounded-lg uppercase tracking-widest">ECOFEIRA PROMO</span><h4 className="text-xl sm:text-5xl font-[900] text-white leading-tight tracking-tight">Sua Marca em Destaque</h4></div><button className="bg-white text-[#111827] font-[900] py-3 sm:py-6 px-6 sm:px-16 rounded-xl sm:rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all text-[10px] sm:text-base uppercase tracking-wider">Saber Mais</button></div></div>
               {filteredStores.map(store => (
-                <div key={store.id} className="bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-800 rounded-2xl sm:rounded-[3.5rem] p-4 sm:p-16 shadow-sm hover:shadow-2xl transition-all duration-700 flex flex-col items-center text-center space-y-4 sm:space-y-10 group"><div className="w-16 h-16 sm:w-40 sm:h-40 bg-[#f8fafc] dark:bg-[#0f172a] rounded-xl sm:rounded-[2.8rem] flex items-center justify-center p-3 sm:p-10 border border-gray-100 group-hover:scale-110 transition-all duration-700"><img src={store.logo} alt={store.name} className="w-full h-full object-contain" /></div><div className="space-y-1 sm:space-y-4"><h3 className="text-base sm:text-4xl font-[900] text-[#111827] dark:text-white tracking-tighter leading-tight line-clamp-1">{store.name}</h3><p className="text-[8px] sm:text-base text-gray-400 font-bold max-w-[200px] sm:max-w-none">{store.neighborhood}</p><div className="flex justify-center mt-2"><div className={`inline-flex items-center px-4 py-1.5 rounded-full border text-[10px] sm:text-xs font-black uppercase tracking-widest space-x-2 ${store.status?.toLowerCase() === 'aberto' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}><span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${store.status?.toLowerCase() === 'aberto' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span><span>{store.status || 'Fechado'}</span></div></div></div><div className="pt-2 sm:pt-8 w-full"><button onClick={() => openStoreDetail(store)} className="w-full py-3 sm:py-6 border-2 border-gray-100 dark:border-gray-800 text-[#111827] dark:text-white font-[900] rounded-xl sm:rounded-[2rem] hover:border-brand hover:text-brand dark:hover:bg-brand dark:hover:text-white transition-all flex items-center justify-center space-x-2 sm:space-x-4 text-xs sm:text-xl"><span>Ver Ofertas</span><svg className="w-3 h-3 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></button></div></div>
+                <div key={store.id} className="bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-800 rounded-2xl sm:rounded-[3.5rem] p-4 sm:p-16 shadow-sm hover:shadow-2xl transition-all duration-700 flex flex-col items-center text-center space-y-4 sm:space-y-10 group"><div className="w-16 h-16 sm:w-40 sm:h-40 bg-[#f8fafc] dark:bg-[#0f172a] rounded-xl sm:rounded-[2.8rem] flex items-center justify-center p-3 sm:p-10 border border-gray-100 group-hover:scale-110 transition-all duration-700"><img src={store.logo} alt={store.name} className="w-full h-full object-contain pointer-events-none" draggable={false} onContextMenu={(e) => e.preventDefault()} /></div><div className="space-y-1 sm:space-y-4"><h3 className="text-base sm:text-4xl font-[900] text-[#111827] dark:text-white tracking-tighter leading-tight line-clamp-1">{store.name}</h3><p className="text-[8px] sm:text-base text-gray-400 font-bold max-w-[200px] sm:max-w-none">{store.street}, {store.number} - {store.neighborhood}</p><div className="flex justify-center mt-2"><div className={`inline-flex items-center px-4 py-1.5 rounded-full border text-[10px] sm:text-xs font-black uppercase tracking-widest space-x-2 ${store.status?.toLowerCase() === 'aberto' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}><span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${store.status?.toLowerCase() === 'aberto' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span><span>{store.status || 'Fechado'}</span></div></div></div><div className="pt-2 sm:pt-8 w-full"><button onClick={() => openStoreDetail(store)} className="w-full py-3 sm:py-6 border-2 border-gray-100 dark:border-gray-800 text-[#111827] dark:text-white font-[900] rounded-xl sm:rounded-[2rem] hover:border-brand hover:text-brand dark:hover:bg-brand dark:hover:text-white transition-all flex items-center justify-center space-x-2 sm:space-x-4 text-xs sm:text-xl"><span>Ver Ofertas</span><svg className="w-3 h-3 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></button></div></div>
               ))}
             </div>
           </div>
@@ -1231,7 +1299,7 @@ const App: React.FC = () => {
                                 {item.productName}
                               </p>
                               <div className="flex items-center mt-1 space-x-2">
-                                {storeLogo && <div className="w-4 h-4 sm:w-5 h-5 bg-white rounded-md p-0.5 border border-gray-100 flex items-center justify-center flex-shrink-0"><img src={storeLogo} alt="" className="w-full h-full object-contain" /></div>}
+                                {storeLogo && <div className="w-4 h-4 sm:w-5 h-5 bg-white rounded-md p-0.5 border border-gray-100 flex items-center justify-center flex-shrink-0"><img src={storeLogo} alt="" className="w-full h-full object-contain pointer-events-none" draggable={false} onContextMenu={(e) => e.preventDefault()} /></div>}
                                 <p className="text-[8px] sm:text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest group-hover:text-brand/80 dark:group-hover:text-white/80 transition-colors truncate">
                                   {item.originalStore}
                                 </p>

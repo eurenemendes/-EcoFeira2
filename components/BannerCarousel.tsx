@@ -27,7 +27,9 @@ export const BannerCarousel: React.FC<BannerCarouselProps> = ({ banners }) => {
         <img 
           src={currentBanner.imageUrl} 
           alt={currentBanner.title}
-          className="w-full h-full object-cover transition-transform duration-[3000ms] scale-105 group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-[3000ms] scale-105 group-hover:scale-110 pointer-events-none select-none"
+          draggable={false}
+          onContextMenu={(e) => e.preventDefault()}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-center items-center text-center px-8">
           <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
