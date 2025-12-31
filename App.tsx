@@ -794,9 +794,9 @@ const App: React.FC = () => {
 
   const storeSuggestions = useMemo(() => {
     if (storeSearchQuery.length < 1) return [];
-    const q = normalizeString(storeSearchQuery);
+    const q = normalizeString(searchQuery);
     return stores.filter(s => normalizeString(s.name).includes(q) || normalizeString(s.neighborhood).includes(q)).slice(0, 5);
-  }, [stores, storeSearchQuery]);
+  }, [stores, searchQuery]);
 
   const categories = useMemo(() => ['Todas', ...Array.from(new Set<string>(products.map(p => p.category)))], [products]);
   const supermarketNames = useMemo(() => ['Todos', ...Array.from(new Set<string>(products.map(p => p.supermarket)))], [products]);
@@ -840,7 +840,6 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Marquee Container Outside Center Constraints */}
             <div className="relative w-screen left-1/2 -translate-x-1/2 marquee-mask overflow-hidden py-6 sm:py-10 select-none">
               <div className="flex animate-marquee whitespace-nowrap gap-10 sm:gap-24 w-max items-center">
                 {stores.length > 0 ? [...stores, ...stores, ...stores].map((store, idx) => (
@@ -1174,9 +1173,36 @@ const App: React.FC = () => {
                     {shoppingList.map((item, idx) => {
                       const storeLogo = stores.find(s => s.name === item.originalStore)?.logo;
                       return (
-                        <div key={item.id} className={`flex flex-col sm:flex-row items-center justify-between p-4 sm:p-8 ${idx !== shoppingList.length - 1 ? 'border-b border-gray-50 dark:border-gray-800/50' : ''} hover:bg-brand/5 dark:hover:bg-brand transition-all duration-300 group gap-4`}>
-                          <div className="flex items-center space-x-4 w-full"><div className="min-w-0"><p className="text-lg sm:text-2xl font-[900] truncate text-gray-900 dark:text-gray-100 group-hover:text-brand dark:group-hover:text-white transition-colors">{item.productName}</p><div className="flex items-center mt-1 space-x-2">{storeLogo && <div className="w-5 h-5 bg-white rounded-md p-0.5 border border-gray-100 flex items-center justify-center"><img src={storeLogo} alt="" className="w-full h-full object-contain" /></div>}<p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest group-hover:text-brand/80 dark:group-hover:text-white/80 transition-colors">{item.originalStore}</p></div></div></div>
-                          <div className="flex items-center space-x-4 w-full sm:w-auto justify-end"><div className="flex items-center bg-[#f4f7f6] dark:bg-[#0f172a] rounded-xl p-1"><button onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 sm:w-12 flex items-center justify-center text-gray-400 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition active:scale-90"><svg className="w-4 h-4 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M20 12H4" /></svg></button><span className="w-10 sm:w-16 text-center font-[900] text-lg sm:text-3xl text-[#111827] dark:text-white group-hover:text-brand dark:group-hover:text-white transition-colors">{item.quantity}</span><button onClick={() => updateQuantity(item.id, 1)} className="w-8 h-8 sm:w-12 flex items-center justify-center text-gray-400 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition active:scale-90"><svg className="w-4 h-4 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M12 4v16m8-8H4" /></svg></button></div><button onClick={() => removeFromList(item.id)} className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div>
+                        <div key={item.id} className={`flex flex-row items-center justify-between p-4 sm:p-8 ${idx !== shoppingList.length - 1 ? 'border-b border-gray-50 dark:border-gray-800/50' : ''} hover:bg-brand/5 dark:hover:bg-brand transition-all duration-300 group gap-2 sm:gap-4`}>
+                          <div className="flex items-center space-x-4 flex-grow min-w-0">
+                            <div className="min-w-0">
+                              <p className="text-base sm:text-2xl font-[900] truncate text-gray-900 dark:text-gray-100 group-hover:text-brand dark:group-hover:text-white transition-colors">
+                                {item.productName}
+                              </p>
+                              <div className="flex items-center mt-1 space-x-2">
+                                {storeLogo && <div className="w-4 h-4 sm:w-5 h-5 bg-white rounded-md p-0.5 border border-gray-100 flex items-center justify-center flex-shrink-0"><img src={storeLogo} alt="" className="w-full h-full object-contain" /></div>}
+                                <p className="text-[8px] sm:text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest group-hover:text-brand/80 dark:group-hover:text-white/80 transition-colors truncate">
+                                  {item.originalStore}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0 justify-end">
+                            <div className="flex items-center bg-[#f4f7f6] dark:bg-[#0f172a] rounded-xl p-1">
+                              <button onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 sm:w-12 flex items-center justify-center text-gray-400 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition active:scale-90">
+                                <svg className="w-4 h-4 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M20 12H4" /></svg>
+                              </button>
+                              <span className="w-8 sm:w-16 text-center font-[900] text-sm sm:text-3xl text-[#111827] dark:text-white group-hover:text-brand dark:group-hover:text-white transition-colors">
+                                {item.quantity}
+                              </span>
+                              <button onClick={() => updateQuantity(item.id, 1)} className="w-8 h-8 sm:w-12 flex items-center justify-center text-gray-400 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition active:scale-90">
+                                <svg className="w-4 h-4 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M12 4v16m8-8H4" /></svg>
+                              </button>
+                            </div>
+                            <button onClick={() => removeFromList(item.id)} className="p-2 sm:p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all">
+                              <svg className="w-4 h-4 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                          </div>
                         </div>
                       );
                     })}

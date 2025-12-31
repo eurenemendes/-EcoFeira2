@@ -56,10 +56,15 @@ export const CartOptimizer: React.FC<CartOptimizerProps> = ({ items, allProducts
       };
     });
 
-    results.sort((a, b) => a.totalEstimated - b.totalEstimated);
-    if (results.length > 0) results[0].isBestOption = true;
+    // Filtra lojas com 0 itens confirmados, ordena por preço estimado e pega as top 4
+    const filteredResults = results
+      .filter(res => res.confirmedCount > 0)
+      .sort((a, b) => a.totalEstimated - b.totalEstimated)
+      .slice(0, 4);
 
-    return results;
+    if (filteredResults.length > 0) filteredResults[0].isBestOption = true;
+
+    return filteredResults;
   }, [items, allProducts, stores, storeFactorsMap]);
 
   const modalItems = useMemo(() => {
@@ -78,6 +83,9 @@ export const CartOptimizer: React.FC<CartOptimizerProps> = ({ items, allProducts
   if (items.length === 0) return null;
 
   const bestOption = comparison[0];
+  // Se não houver opções após o filtro, não exibe o banner de economia
+  if (!bestOption) return null;
+
   const worstOption = comparison[comparison.length - 1];
   const savings = worstOption.totalEstimated - bestOption.totalEstimated;
 
@@ -95,7 +103,7 @@ export const CartOptimizer: React.FC<CartOptimizerProps> = ({ items, allProducts
           <h3 className="text-4xl font-[900] tracking-tighter leading-tight">
             Você economiza <span className="underline decoration-[6px] underline-offset-8">R$ {savings.toFixed(2).replace('.', ',')}</span> nesta escolha!
           </h3>
-          <p className="text-white/80 font-bold text-sm mt-6">Considerando a lista completa entre {stores.length} estabelecimentos.</p>
+          <p className="text-white/80 font-bold text-sm mt-6">Considerando a lista completa entre as melhores opções.</p>
         </div>
       </div>
 
@@ -114,7 +122,6 @@ export const CartOptimizer: React.FC<CartOptimizerProps> = ({ items, allProducts
                 </div>
                 
                 <div className="flex-grow">
-                  {/* Badge positioned above the name as per screenshot */}
                   {res.isBestOption && (
                     <div className="mb-2">
                       <span className="bg-brand text-white text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-tighter shadow-lg shadow-brand/20">Melhor Preço</span>
@@ -125,7 +132,6 @@ export const CartOptimizer: React.FC<CartOptimizerProps> = ({ items, allProducts
                     <span className="font-extrabold text-xl text-gray-900 dark:text-white tracking-tight">{res.storeName}</span>
                   </div>
                   
-                  {/* Price Section */}
                   <div className="mt-3 mb-3">
                     <div className="flex items-baseline space-x-2">
                        <span className={`text-3xl font-[1000] tracking-tighter ${res.isBestOption ? 'text-brand' : 'text-gray-900 dark:text-white'}`}>
@@ -153,7 +159,7 @@ export const CartOptimizer: React.FC<CartOptimizerProps> = ({ items, allProducts
         </div>
       </div>
       
-      {/* Confirmed Items Modal */}
+      {/* Modal e Rodapé omitidos para brevidade, mas permanecem no arquivo original */}
       {selectedStoreModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
           <div 
