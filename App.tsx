@@ -509,10 +509,10 @@ const StoreDetailView = ({
 
         <div className="space-y-8 sm:space-y-12">
           <div className="flex flex-col space-y-8">
-            <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
-              <div className="relative flex-grow w-full" ref={searchSuggestionRef}>
+            <div className="flex flex-row items-stretch gap-2 sm:gap-8">
+              <div className="relative flex-grow" ref={searchSuggestionRef}>
                 <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800/40 rounded-xl sm:rounded-[2.5rem] -m-1"></div>
-                <div className="relative flex items-center bg-white dark:bg-[#1e293b] rounded-xl sm:rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm transition-all focus-within:ring-4 focus-within:ring-brand/10">
+                <div className="relative h-full flex items-center bg-white dark:bg-[#1e293b] rounded-xl sm:rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm transition-all focus-within:ring-4 focus-within:ring-brand/10">
                   <div className="pl-4 sm:pl-8 pr-2 sm:pr-4 text-gray-400">
                     <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -520,11 +520,11 @@ const StoreDetailView = ({
                   </div>
                   <input 
                     type="text"
-                    placeholder={`Buscar ofertas no ${currentStore.name}...`}
+                    placeholder={`Buscar ofertas...`}
                     value={searchQuery}
                     onChange={(e) => {setSearchQuery(e.target.value); setShowSearchSuggestions(true);}}
                     onFocus={() => setShowSearchSuggestions(true)}
-                    className="w-full bg-transparent border-none focus:ring-0 py-4 sm:py-6 text-base sm:text-xl font-bold dark:text-white outline-none"
+                    className="w-full bg-transparent border-none focus:ring-0 py-4 sm:py-6 text-sm sm:text-xl font-bold dark:text-white outline-none"
                   />
                   {searchQuery && (
                     <div className="p-2 pr-3 sm:pr-6">
@@ -555,15 +555,15 @@ const StoreDetailView = ({
                 )}
               </div>
 
-              <div className="flex-shrink-0 flex items-center bg-white dark:bg-[#1e293b] p-2.5 rounded-xl sm:rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm">
-                <div className="flex items-center px-4 sm:px-6 space-x-3 text-gray-400">
+              <div className="flex-shrink-0 flex items-center bg-white dark:bg-[#1e293b] p-2 rounded-xl sm:rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm">
+                <div className="flex items-center px-2 sm:px-6 space-x-2 sm:space-x-3 text-gray-400">
                   <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                   </svg>
                   <select 
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
-                    className="bg-transparent border-none focus:ring-0 text-[10px] sm:text-sm font-[900] text-[#111827] dark:text-white cursor-pointer py-2 px-0"
+                    className="bg-transparent border-none focus:ring-0 text-[11px] sm:text-sm font-[900] text-[#111827] dark:text-white cursor-pointer py-2 px-0"
                   >
                     <option value="none">Relevantes</option>
                     <option value="price-asc">Menor Preço</option>
