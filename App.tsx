@@ -794,9 +794,9 @@ const App: React.FC = () => {
 
   const storeSuggestions = useMemo(() => {
     if (storeSearchQuery.length < 1) return [];
-    const q = normalizeString(searchQuery);
+    const q = normalizeString(storeSearchQuery);
     return stores.filter(s => normalizeString(s.name).includes(q) || normalizeString(s.neighborhood).includes(q)).slice(0, 5);
-  }, [stores, searchQuery]);
+  }, [stores, storeSearchQuery]);
 
   const categories = useMemo(() => ['Todas', ...Array.from(new Set<string>(products.map(p => p.category)))], [products]);
   const supermarketNames = useMemo(() => ['Todos', ...Array.from(new Set<string>(products.map(p => p.supermarket)))], [products]);
@@ -975,7 +975,18 @@ const App: React.FC = () => {
                       onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit(searchQuery)}
                       className="w-full bg-transparent border-none focus:ring-0 py-4 sm:py-6 text-base sm:text-xl font-[800] dark:text-white outline-none" 
                     />
-                    <div className="p-2 pr-3 sm:pr-4">{searchQuery && <button onClick={() => {setSearchQuery(''); setShowSearchSuggestions(false);}} className="bg-red-500 text-white p-2.5 sm:p-4 rounded-lg sm:rounded-3xl shadow-lg shadow-red-500/20 hover:scale-105 transition-all"><svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg></button>}</div>
+                    <div className="p-2 pr-3 sm:pr-4">
+                      {searchQuery && (
+                        <button 
+                          onClick={() => {setSearchQuery(''); setShowSearchSuggestions(false);}} 
+                          className="bg-red-500 text-white p-2.5 sm:p-4 rounded-lg sm:rounded-3xl shadow-lg shadow-red-500/20 hover:scale-105 transition-all"
+                        >
+                          <svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                   </div>
                   
                   {showSearchSuggestions && (
@@ -1089,11 +1100,51 @@ const App: React.FC = () => {
               <div><h1 className="text-4xl sm:text-6xl font-[900] text-[#111827] dark:text-white tracking-tighter mb-4">Parceiros</h1><p className="text-gray-500 dark:text-gray-400 font-[800] text-base sm:text-xl">Encontre as melhores ofertas próximas de você</p></div>
               <div className="relative w-full lg:w-[450px] group" ref={suggestionRef}>
                 <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800/40 rounded-xl sm:rounded-[2.5rem] -m-1"></div>
-                <div className="relative flex items-center bg-white dark:bg-[#1e293b] rounded-xl sm:rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm transition-all focus-within:ring-4 focus-within:ring-brand/10"><div className="pl-4 sm:pl-8 pr-2 sm:pr-4 text-gray-400"><svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></div><input type="text" placeholder="Nome ou Bairro..." value={storeSearchQuery} onChange={(e) => {setStoreSearchQuery(e.target.value); setShowStoreSuggestions(true);}} onFocus={() => setShowStoreSuggestions(true)} className="w-full bg-transparent border-none focus:ring-0 py-4 sm:py-6 text-base sm:text-xl font-bold dark:text-white outline-none" /><div className="p-2 pr-3 sm:pr-4">{storeSearchQuery && <button onClick={() => {setStoreSearchQuery(''); setShowStoreSuggestions(false);}} className="bg-red-500 text-white p-2.5 sm:p-4 rounded-lg shadow-red-500/20 hover:scale-105 transition-all"><svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg></button></div></div>
+                <div className="relative flex items-center bg-white dark:bg-[#1e293b] rounded-xl sm:rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm transition-all focus-within:ring-4 focus-within:ring-brand/10">
+                  <div className="pl-4 sm:pl-8 pr-2 sm:pr-4 text-gray-400">
+                    <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input 
+                    type="text" 
+                    placeholder="Nome ou Bairro..." 
+                    value={storeSearchQuery} 
+                    onChange={(e) => {setStoreSearchQuery(e.target.value); setShowStoreSuggestions(true);}} 
+                    onFocus={() => setShowStoreSuggestions(true)} 
+                    className="w-full bg-transparent border-none focus:ring-0 py-4 sm:py-6 text-base sm:text-xl font-bold dark:text-white outline-none" 
+                  />
+                  <div className="p-2 pr-3 sm:pr-4">
+                    {storeSearchQuery && (
+                      <button 
+                        onClick={() => {setStoreSearchQuery(''); setShowStoreSuggestions(false);}} 
+                        className="bg-red-500 text-white p-2.5 sm:p-4 rounded-lg shadow-red-500/20 hover:scale-105 transition-all"
+                      >
+                        <svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                </div>
                 {showStoreSuggestions && storeSuggestions.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-4 bg-white dark:bg-[#1e293b] rounded-xl sm:rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden z-[200]">
                     <div className="p-3 bg-gray-50 border-b border-gray-100"><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sugestões EcoFeira</span></div>
-                    {storeSuggestions.map((s) => <button key={s.id} onClick={() => {setStoreSearchQuery(s.name); setShowStoreSuggestions(false); openStoreDetail(s);}} className="w-full flex items-center space-x-4 p-4 hover:bg-brand/5 border-b border-gray-50 last:border-none group text-left"><div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1.5 shadow-sm border border-gray-100 group-hover:scale-105"><img src={s.logo} alt={s.name} className="w-full h-full object-contain" /></div><div><p className="text-base font-black text-gray-900 leading-none">{s.name}</p><p className="text-[10px] font-bold text-gray-400 mt-1">{s.neighborhood}</p></div></button>)}
+                    {storeSuggestions.map((s) => (
+                      <button 
+                        key={s.id} 
+                        onClick={() => {setStoreSearchQuery(s.name); setShowStoreSuggestions(false); openStoreDetail(s);}} 
+                        className="w-full flex items-center space-x-4 p-4 hover:bg-brand/5 border-b border-gray-50 last:border-none group text-left"
+                      >
+                        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1.5 shadow-sm border border-gray-100 group-hover:scale-105">
+                          <img src={s.logo} alt={s.name} className="w-full h-full object-contain" />
+                        </div>
+                        <div>
+                          <p className="text-base font-black text-gray-900 leading-none">{s.name}</p>
+                          <p className="text-[10px] font-bold text-gray-400 mt-1">{s.neighborhood}</p>
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
@@ -1216,7 +1267,22 @@ const App: React.FC = () => {
               <CartOptimizer items={shoppingList} allProducts={products} stores={stores} />
             </div>
             {isClearListModalOpen && (
-              <div className="fixed inset-0 z-[300] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={() => setIsClearListModalOpen(false)}></div><div className="relative bg-white dark:bg-[#1e293b] w-full max-md rounded-[3rem] p-8 text-center"><div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mx-auto mb-8"><svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></div><h3 className="text-2xl font-[900] text-[#111827] dark:text-white mb-4">Limpar Lista?</h3><p className="text-gray-500 dark:text-gray-400 mb-10">Deseja remover todos os itens da sua lista de compras? Esta ação não pode ser desfeita.</p><div className="grid grid-cols-2 gap-4"><button onClick={() => setIsClearListModalOpen(false)} className="py-4 font-[900] text-gray-500 hover:bg-gray-50 rounded-2xl">Cancelar</button><button onClick={clearShoppingList} className="bg-brand text-white font-[900] py-4 rounded-2xl shadow-brand/30">Limpar Lista</button></div></div></div>
+              <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={() => setIsClearListModalOpen(false)}></div>
+                <div className="relative bg-white dark:bg-[#1e293b] w-full max-md rounded-[3rem] p-8 text-center">
+                  <div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mx-auto mb-8">
+                    <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </div>
+                  <h3 className="text-2xl font-[900] text-[#111827] dark:text-white mb-4">Limpar Lista?</h3>
+                  <p className="text-gray-500 dark:text-gray-400 mb-10">Deseja remover todos os itens da sua lista de compras? Esta ação não pode ser desfeita.</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button onClick={() => setIsClearListModalOpen(false)} className="py-4 font-[900] text-gray-500 hover:bg-gray-50 rounded-2xl">Cancelar</button>
+                    <button onClick={clearShoppingList} className="bg-brand text-white font-[900] py-4 rounded-2xl shadow-brand/30">Limpar Lista</button>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         } />

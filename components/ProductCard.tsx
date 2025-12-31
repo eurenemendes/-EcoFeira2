@@ -30,12 +30,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToList, 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    // Constrói a URL de forma profissional tratando possíveis subdiretórios (ex: GitHub Pages)
-    const baseUrl = window.location.href.split('#')[0];
+    // Constrói a URL absoluta base, removendo o hash se existir
+    const baseUrl = window.location.href.split('#')[0].replace(/\/$/, "");
     const storeSlug = slugify(product.supermarket);
     const categorySlug = slugify(product.category);
     const nameSlug = slugify(product.name);
-    const shareUrl = `${baseUrl}#/${storeSlug}/${categorySlug}/${product.id}/${nameSlug}`;
+    
+    // Formato profissional para HashRouter
+    const shareUrl = `${baseUrl}/#/${storeSlug}/${categorySlug}/${product.id}/${nameSlug}`;
     
     const shareData = {
       title: `EcoFeira - ${product.name}`,
