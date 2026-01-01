@@ -3,37 +3,38 @@ import { GoogleGenAI } from "@google/genai";
 import { Product, ShoppingListItem } from "../types";
 
 /**
- * Serviço de Inteligência Artificial EcoFeira
- * Utiliza o modelo Gemini 3 Flash para otimização de economia doméstica.
+ * Nota de Segurança:
+ * Em um ambiente de produção real, as chaves de API nunca devem ser expostas no frontend.
+ * Este serviço foi estruturado para utilizar process.env.API_KEY, que é injetado com segurança 
+ * pelo ambiente de execução. Se você estiver migrando para uma arquitetura com backend próprio,
+ * este arquivo deve ser movido para uma Serverless Function (ex: /api/optimize).
  */
+
+const getAIInstance = () => {
+  if (!process.env.API_KEY) {
+    throw new Error("API Key não configurada. Por favor, verifique as variáveis de ambiente.");
+  }
+  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+};
 
 export const optimizeShoppingList = async (items: ShoppingListItem[], availableProducts: Product[]) => {
   if (items.length === 0) return "Sua lista está vazia! Adicione itens para que eu possa otimizar sua economia.";
 
-  // Inicialização conforme diretrizes: sempre criar nova instância com a API_KEY do ambiente
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = getAIInstance();
 
   const prompt = `
-    Aja como o 'Consultor EcoFeira', um especialista sênior em economia doméstica e análise de varejo.
+    Aja como um especialista sênior em economia doméstica e curadoria de preços.
+    Tenho esta lista de compras: ${items.map(i => `${i.quantity}x ${i.productName}`).join(', ')}.
     
-    LISTA DO USUÁRIO:
-    ${items.map(i => `- ${i.quantity}x ${i.productName} (Preço original: R$${i.originalPrice.toFixed(2)} no ${i.originalStore})`).join('\n')}
+    Estes são os produtos reais disponíveis nos supermercados locais agora:
+    ${availableProducts.map(p => `${p.name} no ${p.supermarket} por R$${p.isPromo ? p.promoPrice : p.normalPrice}`).join('\n')}
     
-    BASE DE DADOS ATUAL (PRODUTOS DISPONÍVEIS):
-    ${availableProducts.map(p => `- ${p.name} no ${p.supermarket}: R$${(p.isPromo ? p.promoPrice : p.normalPrice).toFixed(2)} (${p.isPromo ? 'EM PROMOÇÃO' : 'Preço Normal'})`).join('\n')}
+    Tarefa:
+    1. Identifique em quais lojas cada item está mais barato.
+    2. Sugira substituições de marcas se houver uma economia superior a 20%.
+    3. Destaque se vale a pena dividir a compra em duas lojas ou se o custo de deslocamento não compensa (baseado na proximidade teórica).
     
-    SUA TAREFA:
-    1. Compare os itens da lista com a base de dados.
-    2. Identifique onde cada item está mais barato.
-    3. Sugira substituições de marcas se houver uma economia significativa (mais de 15%).
-    4. Crie uma estratégia de rota: Vale a pena ir em mais de uma loja? Qual a economia total estimada?
-    5. Destaque 2 "Achados do Dia" baseados nas promoções da base de dados que combinam com o perfil da lista.
-
-    FORMATO DE RESPOSTA:
-    - Use tom profissional, amigável e motivador.
-    - Estruture em tópicos curtos e claros.
-    - Use negrito para nomes de lojas e preços.
-    - Finalize com uma estimativa de quanto tempo e dinheiro o usuário economizará seguindo sua dica.
+    Responda em Português de forma profissional, amigável e estruturada em tópicos curtos e acionáveis.
   `;
 
   try {
@@ -42,7 +43,8 @@ export const optimizeShoppingList = async (items: ShoppingListItem[], availableP
       contents: prompt,
       config: {
         temperature: 0.7,
-        thinkingConfig: { thinkingBudget: 0 } // Desabilitando thinking para menor latência em tarefas de texto simples
+        topP: 0.8,
+        topK: 40,
       }
     });
 
@@ -52,7 +54,13 @@ export const optimizeShoppingList = async (items: ShoppingListItem[], availableP
 
     return response.text;
   } catch (error: any) {
-    console.error("Erro no GeminiService:", error);
-    return "Desculpe, tive um breve soluço digital ao analisar sua lista. Mas não pare de economizar! Confira abaixo o comparativo manual que preparei para você.";
+    console.error("Erro crítico no GeminiService:", error);
+    
+    // Fallback amigável sem expor detalhes técnicos sensíveis do erro
+    if (error.message?.includes("API_KEY")) {
+      return "Erro de configuração: Chave de API inválida ou expirada.";
+    }
+    
+    return "Desculpe, tive um problema ao analisar sua lista agora. Mas não se preocupe, você ainda pode conferir os menores preços marcados na sua lista abaixo!";
   }
 };
