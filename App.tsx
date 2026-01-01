@@ -84,6 +84,7 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
   const product = products.find(p => p.id === productId);
   
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
 
   const allImages = useMemo(() => {
     if (!product) return [];
@@ -237,11 +238,27 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
       </div>
 
       {product.description && (
-        <div className="bg-white dark:bg-[#1e293b] p-8 sm:p-16 rounded-[3rem] border border-gray-100 dark:border-gray-800 animate-in fade-in duration-700">
-           <h2 className="text-2xl sm:text-3xl font-black text-[#111827] dark:text-white tracking-tighter mb-6">Descrição do Produto</h2>
-           <p className="text-gray-500 dark:text-gray-400 text-base sm:text-xl font-medium leading-relaxed whitespace-pre-wrap">
-              {product.description}
-           </p>
+        <div className="space-y-6">
+          <button 
+            onClick={() => setIsDescriptionOpen(!isDescriptionOpen)}
+            className="w-full bg-white dark:bg-[#1e293b] p-8 sm:p-10 rounded-[2.5rem] border border-gray-100 dark:border-gray-800 shadow-sm flex items-center justify-between group hover:border-brand transition-all"
+          >
+            <h2 className="text-2xl sm:text-3xl font-black text-[#111827] dark:text-white tracking-tighter">ver descrição</h2>
+            <div className={`transition-transform duration-300 ${isDescriptionOpen ? 'rotate-180' : ''}`}>
+               <svg className="w-8 h-8 text-gray-400 group-hover:text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M19 9l-7 7-7-7" />
+               </svg>
+            </div>
+          </button>
+          
+          <div className={`grid transition-all duration-500 ease-in-out ${isDescriptionOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'}`}>
+            <div className="overflow-hidden bg-white dark:bg-[#1e293b] p-8 sm:p-16 rounded-[3rem] border border-gray-100 dark:border-gray-800">
+               <h2 className="text-2xl sm:text-3xl font-black text-[#111827] dark:text-white tracking-tighter mb-6">Descrição do Produto</h2>
+               <p className="text-gray-500 dark:text-gray-400 text-base sm:text-xl font-medium leading-relaxed whitespace-pre-wrap">
+                  {product.description}
+               </p>
+            </div>
+          </div>
         </div>
       )}
 
