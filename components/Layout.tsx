@@ -65,7 +65,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
       >
         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
         <aside 
-          className={`absolute left-0 top-0 bottom-0 w-[280px] bg-white dark:bg-[#111827] shadow-2xl transition-transform duration-300 ease-out transform ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+          className={`absolute right-0 top-0 bottom-0 w-[280px] bg-white dark:bg-[#111827] shadow-2xl transition-transform duration-300 ease-out transform ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
         >
           <div className="p-6 h-full flex flex-col">
             <div className="flex items-center justify-between mb-10">
@@ -126,16 +126,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
       <header className="bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 sticky top-0 z-[100] transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
-            <button 
-              onClick={toggleMenu}
-              className="p-3 mr-2 lg:hidden text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-all border border-gray-100 dark:border-gray-800"
-              aria-label="Menu"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-
             <div className="flex items-center cursor-pointer flex-grow lg:flex-grow-0" onClick={() => handleNav('/')}>
               <div className="bg-brand p-2.5 rounded-2xl mr-3 shadow-lg shadow-brand/20 transition-transform hover:scale-105 active:scale-95">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -203,6 +193,16 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
                     {cartCount}
                   </span>
                 )}
+              </button>
+
+              <button 
+                onClick={toggleMenu}
+                className="p-3 ml-1 lg:hidden text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-all border border-gray-100 dark:border-gray-800"
+                aria-label="Menu"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
               </button>
             </div>
           </div>
