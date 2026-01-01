@@ -126,11 +126,24 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          // Resolve o caminho do SW de forma absoluta em relação à localização atual para evitar erros de origin mismatch
-          const swUrl = new URL('sw.js', window.location.href).href;
-          navigator.serviceWorker.register(swUrl)
-            .then(reg => console.log('SW registrado com sucesso!', reg.scope))
-            .catch(err => console.error('Falha no registro do SW:', err));
+          // Construção manual do caminho absoluto para o SW para evitar erros de 'Invalid URL' no construtor URL
+          // e prevenir o 'origin mismatch' causado por redirecionamentos de base URL em sandboxes.
+          try {
+            const loc = window.location;
+            const swPath = loc.protocol + '//' + loc.host + loc.pathname.replace(/\/[^\/]*$/, '/') + 'sw.js';
+            
+            navigator.serviceWorker.register(swPath)
+              .then(reg => console.log('SW registrado com sucesso!', reg.scope))
+              .catch(err => {
+                console.warn('Falha no registro do SW via caminho absoluto, tentando relativo...', err);
+                // Fallback para registro relativo simples se o absoluto falhar
+                navigator.serviceWorker.register('./sw.js')
+                  .then(r => console.log('SW registrado via fallback!', r.scope))
+                  .catch(e => console.error('Erro final no registro do SW:', e));
+              });
+          } catch (e) {
+            console.error('Erro ao preparar registro do Service Worker:', e);
+          }
         });
       }
     </script>
