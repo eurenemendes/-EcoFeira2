@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
   <head>
@@ -122,6 +121,38 @@
     <div id="root"></div>
     <!-- Script principal como módulo ES -->
     <script type="module" src="./index.tsx"></script>
+    
+    <!-- Registro do Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          // O erro de 'origin mismatch' ocorre quando tentamos registrar um SW usando um caminho absoluto 
+          // que aponta para um domínio diferente. Usar o caminho relativo './sw.js' garante que o navegador
+          // tente carregar o arquivo da mesma origem do documento atual.
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('SW registrado com sucesso!', reg.scope))
+            .catch(err => {
+              // Logamos apenas um aviso silencioso para não interromper a experiência do usuário em sandboxes
+              console.warn('Registro do Service Worker ignorado ou indisponível:', err.message);
+            });
+        });
+      }
+    </script>
+
+    <!-- Start of Tawk.to Script -->
+    <script type="text/javascript">
+      var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+      (function(){
+      var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+      s1.async=true;
+      s1.src='https://embed.tawk.to/6956f22d9d6aae197eabeca9/1jdtq40qm';
+      s1.charset='UTF-8';
+      s1.setAttribute('crossorigin','*');
+      s0.parentNode.insertBefore(s1,s0);
+      })();
+    </script>
+    <!-- End of Tawk.to Script -->
+
     <!-- ✨ Click anywhere ✨ for ✨ spark ✨ effect ✨ -->
     <script src="https://app.embed.im/spark.js" defer></script>
   </body>
