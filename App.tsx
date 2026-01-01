@@ -226,7 +226,7 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
             </button>
             <button 
               onClick={() => toggleFavorite(product.id)}
-              className={`p-6 rounded-3xl border-2 transition-all flex items-center justify-center ${favorites.includes(product.id) ? 'bg-red-50 border-red-500 text-white shadow-xl shadow-red-500/20' : 'border-gray-100 dark:border-gray-800 text-gray-400 hover:border-red-200'}`}
+              className={`p-6 rounded-3xl border-2 transition-all flex items-center justify-center hover:scale-105 active:scale-95 ${favorites.includes(product.id) ? 'bg-red-500 border-red-600 text-white shadow-2xl shadow-red-500/30' : 'border-gray-100 dark:border-gray-800 text-gray-400 hover:border-red-200'}`}
             >
               <svg className={`w-6 h-6 ${favorites.includes(product.id) ? 'fill-current' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
