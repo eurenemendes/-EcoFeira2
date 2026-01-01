@@ -72,6 +72,24 @@ const setupDragScroll = (ref: React.RefObject<HTMLDivElement | null>) => {
   };
 };
 
+const NotFoundState = ({ title, message, buttonText, onAction }: { title: string, message: string, buttonText: string, onAction: () => void }) => (
+  <div className="flex flex-col items-center justify-center py-20 sm:py-32 px-4 text-center animate-in fade-in zoom-in-95 duration-500">
+    <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-50 dark:bg-[#1e293b] rounded-[2.5rem] flex items-center justify-center mb-10 shadow-inner">
+      <svg className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </div>
+    <h2 className="text-3xl sm:text-5xl font-[1000] text-[#111827] dark:text-white tracking-tighter mb-4">{title}</h2>
+    <p className="text-gray-500 dark:text-gray-400 font-medium text-lg max-w-md mb-10">{message}</p>
+    <button 
+      onClick={onAction}
+      className="bg-brand hover:bg-brand-dark text-white font-black py-5 px-12 rounded-2xl shadow-xl shadow-brand/20 transition-all hover:scale-105 active:scale-95 text-lg"
+    >
+      {buttonText}
+    </button>
+  </div>
+);
+
 const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToList }: { 
   products: Product[], 
   stores: Supermarket[], 
@@ -110,7 +128,16 @@ const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToL
       .slice(0, 4); 
   }, [product, products]);
 
-  if (!product) return null;
+  if (!product) {
+    return (
+      <NotFoundState 
+        title="Produto não encontrado"
+        message="Ops! Esta oferta pode ter expirado ou o produto foi removido da nossa base de dados."
+        buttonText="Explorar outras ofertas"
+        onAction={() => navigate('/produtos')}
+      />
+    );
+  }
 
   const currentPrice = product.isPromo ? product.promoPrice : product.normalPrice;
   const store = stores.find(s => s.name === product.supermarket);
@@ -431,7 +458,16 @@ const StoreDetailView = ({
     return names.slice(0, 8);
   }, [products, searchQuery, currentStore]);
 
-  if (!currentStore) return null;
+  if (!currentStore) {
+    return (
+      <NotFoundState 
+        title="Supermercado não encontrado"
+        message="Não conseguimos localizar este parceiro. Ele pode ter sido removido ou o link está incorreto."
+        buttonText="Ver todos os parceiros"
+        onAction={() => navigate('/supermercados')}
+      />
+    );
+  }
 
   return (
     <div className="space-y-12 sm:space-y-16 animate-in fade-in slide-in-from-bottom-6 duration-700">
