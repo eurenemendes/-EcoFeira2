@@ -1,0 +1,24 @@
+{
+  "name": "EcoFeira - Compare e Economize",
+  "short_name": "EcoFeira",
+  "description": "Um aplicativo inteligente para pesquisar preços em supermercados locais e economizar.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#10b981",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='48' fill='%2310b981'/%3E%3Cpath d='M66 72c0-16.568 13.432-30 30-30s30 13.432 30 30h-6c0-13.255-10.745-24-24-24s-24 10.745-24 24h-6zm66 12H60c-6.627 0-12 5.373-12 12v48c0 6.627 5.373 12 12 12h72c6.627 0 12-5.373 12-12v-48c0-6.627-5.373-12-12-12zm-12 24l-24 24-12-12' stroke='white' stroke-width='15' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='128' fill='%2310b981'/%3E%3Cpath d='M176 192c0-44.183 35.817-80 80-80s80 35.817 80 80h-16c0-35.346-28.654-64-64-64s-64 28.654-64 64h-16zm176 32H160c-17.673 0-32 14.327-32 32v128c0 17.673 14.327 32 32 32h192c17.673 0 32-14.327 32-32V256c0-17.673-14.327-32-32-32zm-32 64l-64 64-32-32' stroke='white' stroke-width='40' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
