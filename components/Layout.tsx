@@ -16,8 +16,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isBannerDismissed, setIsBannerDismissed] = useState(false);
-  
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('theme');
@@ -41,19 +39,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
       setDeferredPrompt(e);
     };
 
-    const handleAppInstalled = () => {
-      setDeferredPrompt(null);
-      console.log('App instalado com sucesso!');
-    };
-
     window.addEventListener('scroll', handleScroll);
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
     
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
@@ -77,8 +68,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
       console.log('Usuário aceitou a instalação');
-      setDeferredPrompt(null);
     }
+    setDeferredPrompt(null);
   };
 
   const handleNav = (path: string) => {
@@ -90,7 +81,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc] dark:bg-[#0f172a] transition-colors duration-300">
-      {/* Menu Lateral Mobile */}
       <div 
         className={`fixed inset-0 z-[200] lg:hidden transition-opacity duration-300 ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       >
@@ -141,7 +131,19 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
               </button>
             </nav>
 
-            <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
+            <div className="pt-6 border-t border-gray-100 dark:border-gray-800 space-y-4">
+              {deferredPrompt && (
+                <button 
+                  onClick={handleInstallClick} 
+                  className="w-full flex items-center space-x-4 p-4 rounded-2xl font-extrabold text-white bg-brand shadow-lg shadow-brand/20 hover:scale-105 active:scale-95 transition-all"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span>Instalar App</span>
+                </button>
+              )}
+              
               <button onClick={toggleDarkMode} className="w-full flex items-center space-x-4 p-4 rounded-2xl font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
                 {isDarkMode ? (
                   <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" /></svg><span>Modo Claro</span></>
@@ -239,41 +241,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
           </div>
         </div>
       </header>
-
-      {/* 🔔 PWA Install Alert Bar - Aparece apenas quando instalável */}
-      {deferredPrompt && !isBannerDismissed && (
-        <div className="bg-brand text-white py-3 px-4 sm:px-6 sticky top-20 z-[90] animate-in slide-in-from-top duration-500 shadow-xl border-b border-white/10">
-          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-            <div className="flex items-center space-x-3 overflow-hidden">
-              <div className="hidden sm:flex bg-white/20 p-2 rounded-xl">
-                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                 </svg>
-              </div>
-              <p className="text-[11px] sm:text-sm font-bold tracking-tight truncate">
-                Instale o <span className="font-black">EcoFeira</span> agora para economizar mais rápido e ter acesso offline!
-              </p>
-            </div>
-            <div className="flex items-center space-x-2 flex-shrink-0">
-              <button 
-                onClick={handleInstallClick}
-                className="bg-white text-brand px-5 py-1.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-sm whitespace-nowrap"
-              >
-                Instalar Agora
-              </button>
-              <button 
-                onClick={() => setIsBannerDismissed(true)}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                aria-label="Fechar alerta"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 relative">
         {children}
