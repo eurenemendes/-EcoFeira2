@@ -1,21 +1,13 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EcoFeira - Compare e Economize</title>
     <meta name="description" content="Compare preços em supermercados locais, encontre ofertas exclusivas e economize tempo e dinheiro com a lista de compras inteligente do EcoFeira." />
-    <meta name="theme-color" content="#10b981" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="EcoFeira" />
-    
-    <link rel="manifest" href="./manifest.json" />
     
     <!-- Favicon Profissional -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2310b981'/%3E%3Cpath d='M11 12c0-2.761 2.239-5 5-5s5 2.239 5 5h-1c0-2.209-1.791-4-4-4s-4 1.791-4 4h-1zm11 2H10c-1.105 0-2 .895-2 2v8c0 1.105.895 2 2 2h12c1.105 0 2-.895 2-2v-8c0-1.105-.895-2-2-2zm-2 4l-4 4-2-2' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='128' fill='%2310b981'/%3E%3Cpath d='M160 192c0-53.02 42.98-96 96-96s96 42.98 96 96h-32c0-35.35-28.65-64-64-64s-64 28.65-64 64h-32zm208 48H144c-17.67 0-32 14.33-32 32v160c0 17.67 14.33 32 32 32h224c17.67 0 32-14.33 32-32V272c0-17.67-14.33-32-32-32zm-32 96l-64 64-32-32' stroke='white' stroke-width='40' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -134,9 +126,13 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
+          // O erro de 'origin mismatch' ocorre quando tentamos registrar um SW usando um caminho absoluto 
+          // que aponta para um domínio diferente. Usar o caminho relativo './sw.js' garante que o navegador
+          // tente carregar o arquivo da mesma origem do documento atual.
           navigator.serviceWorker.register('./sw.js')
             .then(reg => console.log('SW registrado com sucesso!', reg.scope))
             .catch(err => {
+              // Logamos apenas um aviso silencioso para não interromper a experiência do usuário em sandboxes
               console.warn('Registro do Service Worker ignorado ou indisponível:', err.message);
             });
         });

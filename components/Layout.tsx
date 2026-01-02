@@ -15,7 +15,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
 
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('theme');
@@ -35,9 +34,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
     };
 
     window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
@@ -63,7 +60,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc] dark:bg-[#0f172a] transition-colors duration-300">
-      {/* Menu Lateral Mobile */}
       <div 
         className={`fixed inset-0 z-[200] lg:hidden transition-opacity duration-300 ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       >
