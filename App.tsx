@@ -7,6 +7,9 @@ import { Layout } from './components/Layout.tsx';
 import { ProductCard } from './components/ProductCard.tsx';
 import { BannerCarousel } from './components/BannerCarousel.tsx';
 import { CartOptimizer } from './components/CartOptimizer.tsx';
+import { Pagination } from './components/Pagination.tsx';
+
+const ITEMS_PER_PAGE = 30;
 
 const normalizeString = (str: string) => 
   str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -380,7 +383,9 @@ const StoreDetailView = ({
   setShowSearchSuggestions,
   searchSuggestionRef,
   storeCategoriesRef,
-  categories
+  categories,
+  currentPage,
+  setCurrentPage
 }: {
   products: Product[],
   stores: Supermarket[],
@@ -397,7 +402,9 @@ const StoreDetailView = ({
   setShowSearchSuggestions: (b: boolean) => void,
   searchSuggestionRef: React.RefObject<HTMLDivElement | null>,
   storeCategoriesRef: React.RefObject<HTMLDivElement | null>,
-  categories: string[]
+  categories: string[],
+  currentPage: number,
+  setCurrentPage: (n: number) => void
 }) => {
   const navigate = useNavigate();
   const { storeId } = useParams();
@@ -422,6 +429,13 @@ const StoreDetailView = ({
     }
     return result;
   }, [products, currentStore, searchQuery, selectedCategory, sortBy]);
+
+  const paginatedStoreProducts = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return storeDetailProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [storeDetailProducts, currentPage]);
+
+  const totalStorePages = Math.ceil(storeDetailProducts.length / ITEMS_PER_PAGE);
 
   const handleShareStore = async () => {
     const baseUrl = window.location.href.split('#')[0].replace(/\/$/, "");
@@ -650,19 +664,26 @@ const StoreDetailView = ({
             </div>
           </div>
 
-          {storeDetailProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-12">
-              {storeDetailProducts.map((p) => (
-                <ProductCard 
-                  key={p.id}
-                  product={p} 
-                  onAddToList={addToList} 
-                  onToggleFavorite={toggleFavorite}
-                  isFavorite={favorites.includes(p.id)}
-                  storeLogo={currentStore.logo} 
-                />
-              ))}
-            </div>
+          {paginatedStoreProducts.length > 0 ? (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-12">
+                {paginatedStoreProducts.map((p) => (
+                  <ProductCard 
+                    key={p.id}
+                    product={p} 
+                    onAddToList={addToList} 
+                    onToggleFavorite={toggleFavorite}
+                    isFavorite={favorites.includes(p.id)}
+                    storeLogo={currentStore.logo} 
+                  />
+                ))}
+              </div>
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalStorePages}
+                onPageChange={setCurrentPage}
+              />
+            </>
           ) : (
             <div className="text-center py-24 sm:py-40 bg-white dark:bg-[#1e293b] rounded-2xl sm:rounded-[4rem] border-2 border-dashed border-gray-100 dark:border-gray-800 flex flex-col items-center px-4">
               <div className="w-20 h-20 sm:w-32 sm:h-32 bg-gray-50 dark:bg-[#0f172a] rounded-2xl sm:rounded-[2.5rem] flex items-center justify-center mb-6 sm:mb-10 shadow-inner">
@@ -691,6 +712,7 @@ const App: React.FC = () => {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [popularSuggestions, setPopularSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     const saved = localStorage.getItem('ecofeira_recent_searches');
@@ -779,6 +801,11 @@ const App: React.FC = () => {
       };
     }
   }, [loading, location.pathname]);
+
+  // Reseta a página quando qualquer filtro ou rota mudar
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedSupermarket, sortBy, onlyPromos, location.pathname]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -891,6 +918,13 @@ const App: React.FC = () => {
     return result;
   }, [products, searchQuery, selectedCategory, selectedSupermarket, sortBy, onlyPromos]);
 
+  const paginatedFilteredProducts = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
+
+  const totalFilteredPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+
   const searchSuggestions = useMemo(() => {
     if (!searchQuery || searchQuery.length < 2) return [];
     const q = normalizeString(searchQuery);
@@ -900,6 +934,13 @@ const App: React.FC = () => {
   }, [products, searchQuery]);
 
   const favoritedProducts = useMemo(() => products.filter(p => favorites.includes(p.id)), [products, favorites]);
+
+  const paginatedFavoritedProducts = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return favoritedProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [favoritedProducts, currentPage]);
+
+  const totalFavoritePages = Math.ceil(favoritedProducts.length / ITEMS_PER_PAGE);
 
   const filteredStores = useMemo(() => {
     if (!storeSearchQuery) return stores;
@@ -920,6 +961,7 @@ const App: React.FC = () => {
     setSelectedCategory('Todas');
     setSearchQuery('');
     setSortBy('none');
+    setCurrentPage(1);
     navigate(`/supermercado/${store.id}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -1190,7 +1232,7 @@ const App: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-12">
-              {filteredProducts.map((p, idx) => {
+              {paginatedFilteredProducts.map((p, idx) => {
                 const storeLogo = stores.find(s => s.name === p.supermarket)?.logo;
                 return (
                   <React.Fragment key={p.id}>
@@ -1212,6 +1254,12 @@ const App: React.FC = () => {
                 );
               })}
             </div>
+
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={totalFilteredPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
         } />
         
@@ -1297,6 +1345,8 @@ const App: React.FC = () => {
             searchSuggestionRef={searchSuggestionRef}
             storeCategoriesRef={storeCategoriesRef}
             categories={categories}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
           />
         } />
         
@@ -1316,13 +1366,20 @@ const App: React.FC = () => {
               <div><h1 className="text-4xl sm:text-6xl font-[900] text-[#111827] dark:text-white tracking-tighter mb-2 sm:mb-4">Favoritos</h1><p className="text-gray-500 dark:text-gray-400 font-[800] text-base sm:text-xl">Sua seleção personalizada</p></div>
               {favorites.length > 0 && <button onClick={() => setIsClearFavoritesModalOpen(true)} className="bg-red-500 hover:bg-red-600 text-white font-black px-6 sm:px-10 py-3 sm:py-5 rounded-xl shadow-red-500/30 hover:scale-105 flex items-center justify-center space-x-2 transition-all"><svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg><span>Limpar Tudo</span></button>}
             </div>
-            {favoritedProducts.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-12">
-                {favoritedProducts.map((p) => {
-                  const storeLogo = stores.find(s => s.name === p.supermarket)?.logo;
-                  return <ProductCard key={p.id} product={p} onAddToList={addToList} onToggleFavorite={toggleFavorite} isFavorite={true} storeLogo={storeLogo} />;
-                })}
-              </div>
+            {paginatedFavoritedProducts.length > 0 ? (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-12">
+                  {paginatedFavoritedProducts.map((p) => {
+                    const storeLogo = stores.find(s => s.name === p.supermarket)?.logo;
+                    return <ProductCard key={p.id} product={p} onAddToList={addToList} onToggleFavorite={toggleFavorite} isFavorite={true} storeLogo={storeLogo} />;
+                  })}
+                </div>
+                <Pagination 
+                  currentPage={currentPage}
+                  totalPages={totalFavoritePages}
+                  onPageChange={setCurrentPage}
+                />
+              </>
             ) : (
               <div className="text-center py-24 sm:py-40 bg-white dark:bg-[#1e293b] rounded-2xl sm:rounded-[4rem] border-2 border-dashed border-gray-100 flex flex-col items-center px-4"><div className="w-20 h-20 sm:w-32 sm:h-32 bg-red-50 rounded-2xl flex items-center justify-center mb-6 shadow-inner"><svg className="w-10 h-10 sm:w-16 sm:h-16 text-red-200" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg></div><p className="text-gray-400 font-[800] text-xl tracking-tight mb-4">Lista de favoritos vazia</p><button onClick={() => navigate('/produtos')} className="mt-4 bg-brand hover:bg-brand-dark text-white font-[900] py-4 px-10 rounded-xl shadow-brand/40 text-sm uppercase tracking-widest">Explorar Ofertas</button></div>
             )}
@@ -1372,7 +1429,7 @@ const App: React.FC = () => {
                               </button>
                             </div>
                             <button onClick={() => removeFromList(item.id)} className="p-2 sm:p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all">
-                              <svg className="w-4 h-4 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                              <svg className="w-4 h-4 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 7l-.867 12.142A2 2.0 0 0 1 16.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
                           </div>
                         </div>
