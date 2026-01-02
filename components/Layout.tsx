@@ -15,7 +15,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
 
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('theme');
@@ -34,17 +34,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
       }
     };
 
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-
     window.addEventListener('scroll', handleScroll);
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
 
@@ -62,16 +54,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
   const toggleDarkMode = () => setIsDarkMode(prev => !prev);
   const toggleMenu = () => setIsMenuOpen(prev => !prev);
 
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      console.log('Usuário aceitou a instalação');
-    }
-    setDeferredPrompt(null);
-  };
-
   const handleNav = (path: string) => {
     navigate(path);
     setIsMenuOpen(false);
@@ -81,6 +63,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc] dark:bg-[#0f172a] transition-colors duration-300">
+      {/* Menu Lateral Mobile */}
       <div 
         className={`fixed inset-0 z-[200] lg:hidden transition-opacity duration-300 ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       >
@@ -131,19 +114,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
               </button>
             </nav>
 
-            <div className="pt-6 border-t border-gray-100 dark:border-gray-800 space-y-4">
-              {deferredPrompt && (
-                <button 
-                  onClick={handleInstallClick} 
-                  className="w-full flex items-center space-x-4 p-4 rounded-2xl font-extrabold text-white bg-brand shadow-lg shadow-brand/20 hover:scale-105 active:scale-95 transition-all"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  <span>Instalar App</span>
-                </button>
-              )}
-              
+            <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
               <button onClick={toggleDarkMode} className="w-full flex items-center space-x-4 p-4 rounded-2xl font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
                 {isDarkMode ? (
                   <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" /></svg><span>Modo Claro</span></>
