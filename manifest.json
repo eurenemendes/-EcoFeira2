@@ -3,7 +3,7 @@
   "name": "EcoFeira - Compare e Economize",
   "short_name": "EcoFeira",
   "description": "Pesquise preços em supermercados locais, compare ofertas e otimize sua lista de compras.",
-  "start_url": "./index.html",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#10b981",
