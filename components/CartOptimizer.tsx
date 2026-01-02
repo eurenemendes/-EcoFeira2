@@ -1,7 +1,6 @@
 
 import React, { useMemo, useState } from 'react';
 import { ShoppingListItem, Product, ComparisonResult, Supermarket } from '../types';
-import { optimizeShoppingList } from '../services/geminiService';
 
 interface CartOptimizerProps {
   items: ShoppingListItem[];
@@ -11,8 +10,6 @@ interface CartOptimizerProps {
 
 export const CartOptimizer: React.FC<CartOptimizerProps> = ({ items, allProducts, stores }) => {
   const [selectedStoreModal, setSelectedStoreModal] = useState<string | null>(null);
-  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const storeFactorsMap = useMemo(() => {
     const map: Record<string, number> = {};
@@ -59,6 +56,7 @@ export const CartOptimizer: React.FC<CartOptimizerProps> = ({ items, allProducts
       };
     });
 
+    // Filtra lojas com 0 itens confirmados, ordena por preço estimado e pega as top 4
     const filteredResults = results
       .filter(res => res.confirmedCount > 0)
       .sort((a, b) => a.totalEstimated - b.totalEstimated)
@@ -69,16 +67,23 @@ export const CartOptimizer: React.FC<CartOptimizerProps> = ({ items, allProducts
     return filteredResults;
   }, [items, allProducts, stores, storeFactorsMap]);
 
-  const handleAIAnalyze = async () => {
-    setIsAnalyzing(true);
-    const result = await optimizeShoppingList(items, allProducts);
-    setAiAnalysis(result);
-    setIsAnalyzing(false);
-  };
+  const modalItems = useMemo(() => {
+    if (!selectedStoreModal) return [];
+    return items.filter(item => 
+      allProducts.some(p => p.name === item.productName && p.supermarket === selectedStoreModal)
+    ).map(item => {
+      const p = allProducts.find(prod => prod.name === item.productName && prod.supermarket === selectedStoreModal)!;
+      return {
+        ...item,
+        price: p.isPromo ? p.promoPrice : p.normalPrice
+      };
+    });
+  }, [selectedStoreModal, items, allProducts]);
 
   if (items.length === 0) return null;
 
   const bestOption = comparison[0];
+  // Se não houver opções após o filtro, não exibe o banner de economia
   if (!bestOption) return null;
 
   const worstOption = comparison[comparison.length - 1];
@@ -87,124 +92,144 @@ export const CartOptimizer: React.FC<CartOptimizerProps> = ({ items, allProducts
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-700">
       {/* Simulation Banner */}
-      <div className="bg-brand text-white p-8 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-brand/20 relative overflow-hidden">
+      <div className="bg-brand text-white p-10 rounded-[2.5rem] shadow-2xl shadow-brand/20 relative overflow-hidden flex items-center justify-between">
+        <div className="absolute top-1/2 right-4 -translate-y-1/2 opacity-10">
+          <svg className="w-48 h-48" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.82v-1.91c-1.57-.31-3.04-1.22-3.89-2.52l1.58-1.29c.64.93 1.54 1.51 2.31 1.74v-3.72c-1.54-.36-3.89-1.22-3.89-4.22 0-2.22 1.59-3.79 3.89-4.13V2h2.82v1.94c1.3.2 2.45.86 3.19 1.78l-1.54 1.34c-.45-.55-1.05-.93-1.65-1.1v3.42c1.94.55 4.31 1.48 4.31 4.54 0 2.51-1.74 4.07-4.31 4.41zM10.59 8.05c0 .76.65 1.14 1.41 1.33V6.66c-.66.17-1.41.54-1.41 1.39zm2.82 7.74c.82-.2 1.49-.66 1.49-1.49 0-.85-.71-1.21-1.49-1.43v2.92z"/>
+          </svg>
+        </div>
         <div className="relative z-10">
-          <div className="flex items-center space-x-2 mb-4">
-            <span className="bg-white/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">IA EcoFeira</span>
-          </div>
-          <h3 className="text-3xl sm:text-4xl font-[900] tracking-tighter leading-tight">
-            Economia de <span className="underline decoration-4 underline-offset-4">R$ {savings.toFixed(2).replace('.', ',')}</span>
+          <p className="text-white/70 font-bold text-[10px] uppercase tracking-[2px] mb-2">Simulação Inteligente</p>
+          <h3 className="text-4xl font-[900] tracking-tighter leading-tight">
+            Você economiza <span className="underline decoration-[6px] underline-offset-8">R$ {savings.toFixed(2).replace('.', ',')}</span> nesta escolha!
           </h3>
-          <p className="text-white/80 font-bold text-sm mt-4">Escolhendo o {bestOption.storeName} para sua lista completa.</p>
-          
-          <button 
-            onClick={handleAIAnalyze}
-            disabled={isAnalyzing}
-            className={`mt-8 w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center space-x-2 ${
-              isAnalyzing ? 'bg-white/10 text-white/50 cursor-not-allowed' : 'bg-white text-brand hover:bg-gray-100 active:scale-95'
-            }`}
-          >
-            {isAnalyzing ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                <span>Analisando com IA...</span>
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                <span>Otimizar Lista com IA</span>
-              </>
-            )}
-          </button>
+          <p className="text-white/80 font-bold text-sm mt-6">Considerando a lista completa entre as melhores opções.</p>
         </div>
       </div>
 
-      {aiAnalysis && (
-        <div className="bg-brand/5 dark:bg-brand/10 border border-brand/20 p-8 rounded-[2.5rem] animate-in slide-in-from-top-4 duration-500">
-          <div className="flex items-center justify-between mb-6">
-            <h4 className="text-sm font-black text-brand uppercase tracking-widest">Análise do Especialista IA</h4>
-            <button onClick={() => setAiAnalysis(null)} className="text-brand/40 hover:text-brand">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-          <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 font-medium leading-relaxed">
-            {aiAnalysis.split('\n').map((line, i) => (
-              <p key={i} className="mb-2">{line}</p>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Comparison List */}
-      <div className="bg-white dark:bg-[#1e293b] rounded-[3rem] border border-gray-100 dark:border-gray-800 p-8 sm:p-10 shadow-sm">
-        <h4 className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-8">Onde sua lista custa menos</h4>
+      <div className="bg-white dark:bg-[#1e293b] rounded-[3rem] border border-gray-100 dark:border-gray-800 p-10 shadow-sm">
+        <h4 className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-10">Comparativo por Loja</h4>
         <div className="space-y-4">
           {comparison.map((res) => (
             <div 
               key={res.storeName} 
-              className={`flex flex-col p-6 rounded-[2rem] transition-all duration-500 border ${res.isBestOption ? 'bg-brand/5 border-brand/20 ring-1 ring-brand/10' : 'bg-gray-50/50 dark:bg-[#0f172a]/50 border-gray-50 dark:border-gray-800/40'}`}
+              className={`relative flex items-center p-8 rounded-[2rem] transition-all duration-500 border ${res.isBestOption ? 'bg-brand/5 border-brand/20' : 'bg-gray-50/50 dark:bg-[#0f172a]/50 border-gray-50 dark:border-gray-800/40 opacity-90'}`}
             >
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="w-12 h-12 bg-white rounded-xl flex-shrink-0 flex items-center justify-center p-2 shadow-sm border border-gray-100">
-                  <img src={res.logo} alt="" className="w-full h-full object-contain" />
+              <div className="flex items-center space-x-6 w-full">
+                <div className="w-16 h-16 bg-white dark:bg-[#1e293b] rounded-2xl flex-shrink-0 flex items-center justify-center p-2.5 shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+                  <img 
+                    src={res.logo} 
+                    alt={res.storeName} 
+                    className="w-full h-full object-contain pointer-events-none" 
+                    draggable={false}
+                    onContextMenu={(e) => e.preventDefault()}
+                  />
                 </div>
+                
                 <div className="flex-grow">
-                  <h5 className="font-black text-gray-900 dark:text-white leading-tight">{res.storeName}</h5>
-                  <div className="w-full bg-gray-200 dark:bg-gray-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full transition-all duration-1000 ${res.isBestOption ? 'bg-brand' : 'bg-gray-400'}`}
-                      style={{ width: `${(res.confirmedCount / res.itemsCount) * 100}%` }}
-                    ></div>
+                  {res.isBestOption && (
+                    <div className="mb-2">
+                      <span className="bg-brand text-white text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-tighter shadow-lg shadow-brand/20">Melhor Preço</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-xl text-gray-900 dark:text-white tracking-tight">{res.storeName}</span>
+                  </div>
+                  
+                  <div className="mt-3 mb-3">
+                    <div className="flex items-baseline space-x-2">
+                       <span className={`text-3xl font-[1000] tracking-tighter ${res.isBestOption ? 'text-brand' : 'text-gray-900 dark:text-white'}`}>
+                          R$ {res.totalEstimated.toFixed(2).replace('.', ',')}
+                       </span>
+                    </div>
+                    <p className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest leading-none">Total Estimado</p>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                     <button 
+                        onClick={() => setSelectedStoreModal(res.storeName)}
+                        className="flex items-center text-[11px] font-bold text-brand bg-brand/5 dark:bg-brand/10 px-2.5 py-1 rounded-lg border border-brand/10 hover:bg-brand/20 transition-colors"
+                     >
+                        <svg className="w-3.5 h-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        {res.confirmedCount} de {res.itemsCount} confirmados
+                     </button>
                   </div>
                 </div>
-              </div>
-
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className={`text-2xl font-[1000] tracking-tighter ${res.isBestOption ? 'text-brand' : 'text-gray-900 dark:text-white'}`}>
-                    R$ {res.totalEstimated.toFixed(2).replace('.', ',')}
-                  </p>
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total Estimado</p>
-                </div>
-                <button 
-                  onClick={() => setSelectedStoreModal(res.storeName)}
-                  className="px-4 py-2 bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-700 rounded-xl text-[10px] font-black uppercase text-gray-500 hover:text-brand hover:border-brand transition-all"
-                >
-                  Ver Detalhes
-                </button>
               </div>
             </div>
           ))}
         </div>
       </div>
       
+      {/* Modal e Rodapé omitidos para brevidade, mas permanecem no arquivo original */}
       {selectedStoreModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#0f172a]/80 backdrop-blur-sm" onClick={() => setSelectedStoreModal(null)}></div>
-          <div className="relative bg-white dark:bg-[#1e293b] w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="p-8 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-              <h3 className="text-xl font-black dark:text-white">Itens em {selectedStoreModal}</h3>
-              <button onClick={() => setSelectedStoreModal(null)} className="text-gray-400"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg></button>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
+          <div 
+            className="absolute inset-0 bg-[#0f172a]/80 backdrop-blur-sm animate-in fade-in duration-300"
+            onClick={() => setSelectedStoreModal(null)}
+          ></div>
+          
+          <div className="relative bg-white dark:bg-[#1e293b] w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300 border border-gray-100 dark:border-gray-800">
+            <div className="p-8 sm:p-10 bg-gray-50 dark:bg-[#0f172a]/50 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-[900] text-[#111827] dark:text-white tracking-tighter">Itens Confirmados</h3>
+                <p className="text-[10px] font-black text-brand uppercase tracking-widest mt-1">{selectedStoreModal}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedStoreModal(null)}
+                className="p-3 bg-white dark:bg-[#1e293b] text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-2xl border border-gray-100 dark:border-gray-800 transition-all shadow-sm"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-            <div className="max-h-[50vh] overflow-y-auto p-8 space-y-3">
-              {items.map((item, idx) => {
-                const p = allProducts.find(prod => prod.name === item.productName && prod.supermarket === selectedStoreModal);
-                return (
-                  <div key={idx} className={`p-4 rounded-xl border flex items-center justify-between ${p ? 'bg-emerald-50/30 border-emerald-100 dark:bg-emerald-500/5 dark:border-emerald-500/20' : 'bg-gray-50/30 border-gray-100 opacity-60'}`}>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-sm dark:text-gray-200">{item.productName}</span>
-                      <span className="text-[10px] text-gray-400 font-bold uppercase">{p ? 'Confirmado' : 'Estimado'}</span>
+            
+            <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-8 sm:p-10 space-y-4">
+              {modalItems.length > 0 ? (
+                modalItems.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-6 bg-gray-50/50 dark:bg-[#0f172a]/30 rounded-2xl border border-gray-100 dark:border-gray-800/40">
+                    <div className="flex items-center space-x-4">
+                      <div className="bg-brand/10 text-brand p-2 rounded-xl">
+                        <span className="text-sm font-black">{item.quantity}x</span>
+                      </div>
+                      <span className="font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">{item.productName}</span>
                     </div>
-                    <span className="font-black text-brand">
-                      R$ {p ? (p.isPromo ? p.promoPrice : p.normalPrice).toFixed(2) : '---'}
-                    </span>
+                    <div className="text-right">
+                      <p className="text-lg font-[900] text-gray-900 dark:text-white tracking-tighter">R$ {(item.price * item.quantity).toFixed(2).replace('.', ',')}</p>
+                      <p className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Un: R$ {item.price.toFixed(2).replace('.', ',')}</p>
+                    </div>
                   </div>
-                );
-              })}
+                ))
+              ) : (
+                <div className="py-10 text-center space-y-4">
+                  <div className="w-16 h-16 bg-gray-50 dark:bg-[#0f172a] rounded-2xl flex items-center justify-center mx-auto text-gray-300">
+                     <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                     </svg>
+                  </div>
+                  <p className="font-bold text-gray-400 dark:text-gray-500">Nenhum item localizado nesta loja.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-8 sm:p-10 bg-gray-50 dark:bg-[#0f172a]/50 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+              <span className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Total da Cesta</span>
+              <span className="text-3xl font-[1000] text-brand tracking-tighter">
+                R$ {modalItems.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0).toFixed(2).replace('.', ',')}
+              </span>
             </div>
           </div>
         </div>
       )}
+      
+      <p className="text-[10px] text-gray-400 dark:text-gray-600 font-bold italic text-center px-10 leading-relaxed">
+        * Cálculos baseados em preços confirmados hoje e índices de precificação dinâmicos para itens não localizados.
+      </p>
     </div>
   );
 };
