@@ -15,6 +15,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
 
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('theme');
@@ -25,16 +27,28 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
   });
 
   useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    // Verificar se já está instalado
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstallable(false);
+    }
+
     const handleScroll = () => {
-      if (window.scrollY > 400) {
-        setShowScrollTop(true);
-      } else {
-        setShowScrollTop(false);
-      }
+      setShowScrollTop(window.scrollY > 400);
     };
 
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
   useEffect(() => {
@@ -47,6 +61,17 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
       localStorage.setItem('theme', 'light');
     }
   }, [isDarkMode]);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      console.log('EcoFeira: Usuário aceitou a instalação');
+      setIsInstallable(false);
+    }
+    setDeferredPrompt(null);
+  };
 
   const toggleDarkMode = () => setIsDarkMode(prev => !prev);
   const toggleMenu = () => setIsMenuOpen(prev => !prev);
@@ -110,7 +135,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
               </button>
             </nav>
 
-            <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
+            <div className="pt-6 border-t border-gray-100 dark:border-gray-800 space-y-2">
+              {isInstallable && (
+                <button onClick={handleInstall} className="w-full flex items-center space-x-4 p-4 rounded-2xl font-bold bg-brand text-white shadow-lg shadow-brand/20 animate-bounce-subtle mb-4">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  <span>Instalar Aplicativo</span>
+                </button>
+              )}
+
               <button onClick={toggleDarkMode} className="w-full flex items-center space-x-4 p-4 rounded-2xl font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
                 {isDarkMode ? (
                   <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" /></svg><span>Modo Claro</span></>
@@ -151,6 +183,16 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
             </nav>
 
             <div className="flex items-center space-x-2 sm:space-x-3">
+              {isInstallable && (
+                <button 
+                  onClick={handleInstall}
+                  className="hidden md:flex items-center space-x-2 bg-brand/10 text-brand px-4 py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-brand hover:text-white transition-all border border-brand/20"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  <span>Instalar App</span>
+                </button>
+              )}
+
               <button 
                 onClick={() => handleNav('/favoritos')}
                 className={`relative p-3 rounded-full transition-all border shadow-sm ${isActive('/favoritos') ? 'bg-red-50 text-red-500 border-red-100' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-100 dark:border-gray-800'}`}

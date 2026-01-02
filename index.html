@@ -1,17 +1,25 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>EcoFeira - Compare e Economize</title>
     <meta name="description" content="Compare preços em supermercados locais, encontre ofertas exclusivas e economize tempo e dinheiro com a lista de compras inteligente do EcoFeira." />
     
+    <!-- PWA / Mobile Meta Tags -->
+    <meta name="theme-color" content="#10b981" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="EcoFeira" />
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='128' fill='%2310b981'/%3E%3Cpath d='M176 192c0-44.18 35.82-80 80-80s80 35.82 80 80h-16c0-35.35-28.65-64-64-64s-64 28.65-64 64h-16zm176 32H160c-17.68 0-32 14.32-32 32v128c0 17.68 14.32 32 32 32h192c17.68 0 32-14.32 32-32V256c0-17.68-14.32-32-32-32zm-32 64l-64 64-32-32' stroke='white' stroke-width='40' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E" />
+    <link rel="manifest" href="./manifest.json" />
+
     <!-- Favicon Profissional -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2310b981'/%3E%3Cpath d='M11 12c0-2.761 2.239-5 5-5s5 2.239 5 5h-1c0-2.209-1.791-4-4-4s-4 1.791-4 4h-1zm11 2H10c-1.105 0-2 .895-2 2v8c0 1.105.895 2 2 2h12c1.105 0 2-.895 2-2v-8c0-1.105-.895-2-2-2zm-2 4l-4 4-2-2' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      // Shim para o process.env para evitar erros de runtime no navegador
       window.process = { env: { API_KEY: "" } };
       
       tailwind.config = {
@@ -54,25 +62,15 @@
     <style>
       body {
         font-family: 'Plus Jakarta Sans', sans-serif;
+        -webkit-tap-highlight-color: transparent;
       }
       
-      /* Proteção de Imagens */
       img {
         -webkit-user-drag: none;
-        -khtml-user-drag: none;
-        -moz-user-drag: none;
-        -o-user-drag: none;
-        user-drag: none;
         user-select: none;
-        -webkit-user-select: none;
       }
 
-      /* Personalização da Seleção de Texto */
       ::selection {
-        background-color: #10b981;
-        color: white;
-      }
-      ::-moz-selection {
         background-color: #10b981;
         color: white;
       }
@@ -119,27 +117,18 @@
 </head>
   <body class="bg-[#f8fafc] dark:bg-[#0f172a] text-gray-900 dark:text-gray-100 transition-colors duration-300 overflow-x-hidden">
     <div id="root"></div>
-    <!-- Script principal como módulo ES -->
     <script type="module" src="./index.tsx"></script>
     
-    <!-- Registro do Service Worker -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          // O erro de 'origin mismatch' ocorre quando tentamos registrar um SW usando um caminho absoluto 
-          // que aponta para um domínio diferente. Usar o caminho relativo './sw.js' garante que o navegador
-          // tente carregar o arquivo da mesma origem do documento atual.
           navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('SW registrado com sucesso!', reg.scope))
-            .catch(err => {
-              // Logamos apenas um aviso silencioso para não interromper a experiência do usuário em sandboxes
-              console.warn('Registro do Service Worker ignorado ou indisponível:', err.message);
-            });
+            .then(reg => console.log('EcoFeira PWA: SW registrado!', reg.scope))
+            .catch(err => console.warn('EcoFeira PWA: Erro SW:', err.message));
         });
       }
     </script>
 
-    <!-- Start of Tawk.to Script -->
     <script type="text/javascript">
       var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
       (function(){
@@ -151,9 +140,6 @@
       s0.parentNode.insertBefore(s1,s0);
       })();
     </script>
-    <!-- End of Tawk.to Script -->
-
-    <!-- ✨ Click anywhere ✨ for ✨ spark ✨ effect ✨ -->
     <script src="https://app.embed.im/spark.js" defer></script>
   </body>
 </html>

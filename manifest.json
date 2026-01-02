@@ -1,0 +1,24 @@
+
+{
+  "name": "EcoFeira - Compare e Economize",
+  "short_name": "EcoFeira",
+  "description": "Pesquise preços, compare ofertas e economize em supermercados locais.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2310b981'/%3E%3Cpath d='M11 12c0-2.761 2.239-5 5-5s5 2.239 5 5h-1c0-2.209-1.791-4-4-4s-4 1.791-4 4h-1zm11 2H10c-1.105 0-2 .895-2 2v8c0 1.105.895 2 2 2h12c1.105 0 2-.895 2-2v-8c0-1.105-.895-2-2-2zm-2 4l-4 4-2-2' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",
+      "sizes": "32x32",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='128' fill='%2310b981'/%3E%3Cpath d='M176 192c0-44.18 35.82-80 80-80s80 35.82 80 80h-16c0-35.35-28.65-64-64-64s-64 28.65-64 64h-16zm176 32H160c-17.68 0-32 14.32-32 32v128c0 17.68 14.32 32 32 32h192c17.68 0 32-14.32 32-32V256c0-17.68-14.32-32-32-32zm-32 64l-64 64-32-32' stroke='white' stroke-width='40' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
