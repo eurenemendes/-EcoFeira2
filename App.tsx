@@ -1297,9 +1297,14 @@ const App: React.FC = () => {
                     </button>
 
                     {searchQuery ? (
-                      <button onClick={() => {setSearchQuery(''); setShowSearchSuggestions(false);}} className="bg-red-500 hover:bg-red-600 text-white p-3 sm:p-6 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-red-500/30 hover:scale-105 active:scale-95">
-                        <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
+                      <div className="flex items-center space-x-2 sm:space-x-4">
+                        <button onClick={() => {setSearchQuery(''); setShowSearchSuggestions(false);}} className="bg-red-500 hover:bg-red-600 text-white p-3 sm:p-6 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-red-500/30 hover:scale-105 active:scale-95">
+                          <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                        <button onClick={() => handleSearchSubmit(searchQuery)} className="bg-brand hover:bg-brand-dark text-white p-3 sm:p-6 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-brand/30 hover:scale-105 active:scale-95">
+                          <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        </button>
+                      </div>
                     ) : (
                       <button onClick={() => handleSearchSubmit(searchQuery)} className="bg-brand hover:bg-brand-dark text-white font-[900] px-6 sm:px-16 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-brand/30 hover:scale-105 active:scale-95 text-sm sm:text-base">Buscar</button>
                     )}
