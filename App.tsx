@@ -9,6 +9,9 @@ import { BannerCarousel } from './components/BannerCarousel.tsx';
 import { CartOptimizer } from './components/CartOptimizer.tsx';
 import { Pagination } from './components/Pagination.tsx';
 
+// Declaração global para Html5Qrcode pois está vindo via script tag
+declare const Html5Qrcode: any;
+
 const ITEMS_PER_PAGE = 30;
 
 const normalizeString = (str: string) => 
@@ -92,6 +95,196 @@ const NotFoundState = ({ title, message, buttonText, onAction }: { title: string
     </button>
   </div>
 );
+
+const ScannerModal = ({ isOpen, onClose, onScanSuccess }: { isOpen: boolean, onClose: () => void, onScanSuccess: (code: string) => void }) => {
+  const [cameras, setCameras] = useState<any[]>([]);
+  const [selectedCameraId, setSelectedCameraId] = useState<string>('');
+  const [isScanning, setIsScanning] = useState(false);
+  const [isTorchOn, setIsTorchOn] = useState(false);
+  const scannerRef = useRef<any>(null);
+  const containerId = "qr-reader";
+
+  useEffect(() => {
+    if (isOpen) {
+      Html5Qrcode.getCameras().then((devices: any[]) => {
+        if (devices && devices.length > 0) {
+          setCameras(devices);
+          setSelectedCameraId(devices[0].id);
+        }
+      }).catch((err: any) => console.error("Erro ao listar câmeras", err));
+    } else {
+      stopScanner();
+    }
+    return () => {
+      stopScanner();
+    };
+  }, [isOpen]);
+
+  const startScanner = async () => {
+    if (!selectedCameraId) return;
+    
+    scannerRef.current = new Html5Qrcode(containerId);
+    try {
+      setIsScanning(true);
+      await scannerRef.current.start(
+        selectedCameraId,
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
+        },
+        (decodedText: string) => {
+          onScanSuccess(decodedText);
+          onClose();
+        },
+        (errorMessage: string) => {
+          // Frame errors ignored
+        }
+      );
+    } catch (err) {
+      console.error("Falha ao iniciar scanner", err);
+      setIsScanning(false);
+    }
+  };
+
+  const stopScanner = async () => {
+    if (scannerRef.current && scannerRef.current.isScanning) {
+      try {
+        await scannerRef.current.stop();
+        setIsScanning(false);
+        setIsTorchOn(false);
+      } catch (err) {
+        console.error("Erro ao parar scanner", err);
+      }
+    }
+  };
+
+  const toggleTorch = async () => {
+    if (scannerRef.current && scannerRef.current.isScanning) {
+      try {
+        const state = !isTorchOn;
+        await scannerRef.current.applyVideoConstraints({
+          advanced: [{ torch: state }]
+        });
+        setIsTorchOn(state);
+      } catch (err) {
+        console.warn("Flash não suportado neste dispositivo", err);
+      }
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const html5QrCode = new Html5Qrcode(containerId);
+    html5QrCode.scanFile(file, true)
+      .then(decodedText => {
+        onScanSuccess(decodedText);
+        onClose();
+      })
+      .catch(err => {
+        alert("Não foi possível detectar um código nesta imagem.");
+      });
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-[#0f172a]/90 backdrop-blur-md" onClick={onClose}></div>
+      <div className="relative bg-white dark:bg-[#1e293b] w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+        <div className="p-8 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-white/50 dark:bg-[#1e293b]/50 backdrop-blur-xl">
+          <div>
+            <h3 className="text-2xl font-black text-[#111827] dark:text-white tracking-tighter">Leitor de Código</h3>
+            <p className="text-[10px] font-black text-brand uppercase tracking-widest mt-1">QR Code & Barras</p>
+          </div>
+          <button onClick={onClose} className="p-3 bg-gray-50 dark:bg-[#0f172a] text-gray-400 hover:text-brand rounded-2xl transition-all border border-gray-100 dark:border-gray-800">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <div className="flex-grow flex flex-col p-6 sm:p-10 space-y-6 overflow-y-auto custom-scrollbar">
+          <div className="relative aspect-square w-full max-w-[320px] mx-auto bg-gray-100 dark:bg-black/40 rounded-[2.5rem] overflow-hidden border-4 border-gray-50 dark:border-gray-800 shadow-inner flex items-center justify-center">
+            <div id={containerId} className="w-full h-full"></div>
+            
+            {!isScanning && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 space-y-4">
+                <div className="w-16 h-16 bg-white dark:bg-[#1e293b] rounded-3xl flex items-center justify-center shadow-lg">
+                  <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                </div>
+                <p className="text-sm font-bold text-gray-400">A câmera está desligada. Clique em "Iniciar Câmera" para escanear.</p>
+              </div>
+            )}
+
+            {isScanning && (
+              <div className="absolute inset-0 pointer-events-none z-10 border-2 border-brand/20">
+                <div className="absolute top-1/2 left-0 right-0 h-1 bg-brand shadow-[0_0_15px_rgba(16,185,129,0.8)] animate-scan-line"></div>
+                <div className="absolute top-4 left-4 w-8 h-8 border-t-4 border-l-4 border-brand rounded-tl-lg"></div>
+                <div className="absolute top-4 right-4 w-8 h-8 border-t-4 border-r-4 border-brand rounded-tr-lg"></div>
+                <div className="absolute bottom-4 left-4 w-8 h-8 border-b-4 border-l-4 border-brand rounded-bl-lg"></div>
+                <div className="absolute bottom-4 right-4 w-8 h-8 border-b-4 border-r-4 border-brand rounded-br-lg"></div>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-grow">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 px-2">Selecionar Câmera</label>
+                <select 
+                  value={selectedCameraId}
+                  onChange={(e) => {
+                    setSelectedCameraId(e.target.value);
+                    if (isScanning) {
+                      stopScanner().then(() => startScanner());
+                    }
+                  }}
+                  className="w-full bg-gray-50 dark:bg-[#0f172a] border border-gray-100 dark:border-gray-800 rounded-2xl p-4 text-sm font-bold text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-brand/20 transition-all"
+                >
+                  {cameras.length > 0 ? cameras.map(cam => (
+                    <option key={cam.id} value={cam.id}>{cam.label || `Câmera ${cam.id.slice(0,4)}`}</option>
+                  )) : (
+                    <option value="">Nenhuma câmera detectada</option>
+                  )}
+                </select>
+              </div>
+              <div className="flex items-end space-x-2">
+                <button 
+                  onClick={toggleTorch}
+                  disabled={!isScanning}
+                  className={`p-4 rounded-2xl border transition-all ${isTorchOn ? 'bg-orange-500 border-orange-600 text-white' : 'bg-gray-50 dark:bg-[#0f172a] border-gray-100 dark:border-gray-800 text-gray-400'} disabled:opacity-30`}
+                  title="Lanterna"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button 
+                onClick={isScanning ? stopScanner : startScanner}
+                className={`flex items-center justify-center space-x-3 p-5 rounded-2xl font-black text-sm uppercase tracking-wider transition-all shadow-xl ${isScanning ? 'bg-red-500 text-white shadow-red-500/20' : 'bg-brand text-white shadow-brand/20 hover:scale-105 active:scale-95'}`}
+              >
+                {isScanning ? (
+                  <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>Desligar</span></>
+                ) : (
+                  <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>Iniciar</span></>
+                )}
+              </button>
+              
+              <label className="flex items-center justify-center space-x-3 p-5 rounded-2xl font-black text-sm uppercase tracking-wider bg-gray-100 dark:bg-[#0f172a] text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-gray-800 hover:border-brand hover:text-brand transition-all cursor-pointer">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                <span>Upload</span>
+                <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ProductDetailView = ({ products, stores, favorites, toggleFavorite, addToList }: { 
   products: Product[], 
@@ -385,7 +578,8 @@ const StoreDetailView = ({
   storeCategoriesRef,
   categories,
   currentPage,
-  setCurrentPage
+  setCurrentPage,
+  onOpenScanner
 }: {
   products: Product[],
   stores: Supermarket[],
@@ -404,7 +598,8 @@ const StoreDetailView = ({
   storeCategoriesRef: React.RefObject<HTMLDivElement | null>,
   categories: string[],
   currentPage: number,
-  setCurrentPage: (n: number) => void
+  setCurrentPage: (n: number) => void,
+  onOpenScanner: () => void
 }) => {
   const navigate = useNavigate();
   const { storeId } = useParams();
@@ -593,8 +788,17 @@ const StoreDetailView = ({
                     onFocus={() => setShowSearchSuggestions(true)}
                     className="w-full bg-transparent border-none focus:ring-0 py-4 sm:py-6 text-sm sm:text-xl font-bold dark:text-white outline-none"
                   />
-                  {searchQuery && (
-                    <div className="p-2 pr-3 sm:pr-6">
+                  
+                  <div className="flex items-center space-x-1 sm:space-x-2 pr-2 sm:pr-4">
+                    <button 
+                      onClick={onOpenScanner}
+                      className="p-3 bg-gray-50 dark:bg-[#0f172a] text-brand rounded-xl sm:rounded-2xl transition-all hover:scale-105 active:scale-95 border border-gray-100 dark:border-gray-800"
+                      title="Escanear Código"
+                    >
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    </button>
+
+                    {searchQuery && (
                       <button 
                         onClick={() => {setSearchQuery(''); setShowSearchSuggestions(false);}}
                         className="bg-red-500 text-white p-2 rounded-lg sm:rounded-xl shadow-lg shadow-red-500/30 hover:scale-105 active:scale-95 transition-all"
@@ -603,8 +807,8 @@ const StoreDetailView = ({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
                 {showSearchSuggestions && storeSearchSuggestions.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-4 bg-white/95 dark:bg-[#1e293b]/95 backdrop-blur-md rounded-2xl sm:rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden z-[200]">
@@ -713,6 +917,11 @@ const App: React.FC = () => {
   const [popularSuggestions, setPopularSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scannedHistory, setScannedHistory] = useState<string[]>(() => {
+    const saved = localStorage.getItem('ecofeira_scanned_history');
+    return saved ? JSON.parse(saved) : [];
+  });
   
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     const saved = localStorage.getItem('ecofeira_recent_searches');
@@ -790,6 +999,10 @@ const App: React.FC = () => {
   }, [recentSearches]);
 
   useEffect(() => {
+    localStorage.setItem('ecofeira_scanned_history', JSON.stringify(scannedHistory));
+  }, [scannedHistory]);
+
+  useEffect(() => {
     if (!loading && (location.pathname === '/produtos' || location.pathname.startsWith('/supermercado/'))) {
       const cleanCats = setupDragScroll(categoriesRef);
       const cleanStores = setupDragScroll(storesRef);
@@ -837,6 +1050,28 @@ const App: React.FC = () => {
     setShowSearchSuggestions(false);
     saveSearch(term);
     navigate('/produtos');
+  };
+
+  const handleScanSuccess = (code: string) => {
+    setScannedHistory(prev => [code, ...prev.filter(c => c !== code)].slice(0, 10));
+    setSearchQuery(code);
+    saveSearch(code);
+    navigate('/produtos');
+    
+    // Feedback sonoro opcional de sucesso
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.1);
+    } catch (e) {}
   };
 
   const addToList = (product: Product) => {
@@ -901,7 +1136,8 @@ const App: React.FC = () => {
       result = result.filter(p => 
         normalizeString(p.name).includes(q) || 
         normalizeString(p.category).includes(q) ||
-        normalizeString(p.supermarket).includes(q)
+        normalizeString(p.supermarket).includes(q) ||
+        p.id === searchQuery // Suporte para busca por ID escaneado
       );
     }
     if (selectedCategory !== 'Todas') result = result.filter(p => p.category === selectedCategory);
@@ -980,6 +1216,8 @@ const App: React.FC = () => {
       cartCount={shoppingList.length}
       favoritesCount={favorites.length}
     >
+      <ScannerModal isOpen={isScannerOpen} onClose={() => setIsScannerOpen(false)} onScanSuccess={handleScanSuccess} />
+      
       <Routes>
         <Route path="/" element={
           <div className="space-y-12 sm:space-y-24">
@@ -1030,7 +1268,7 @@ const App: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     <input 
-                      type="text"
+                      type="text" 
                       placeholder="O que você precisa hoje?"
                       value={searchQuery}
                       onChange={(e) => {setSearchQuery(e.target.value); setShowSearchSuggestions(true);}}
@@ -1039,43 +1277,78 @@ const App: React.FC = () => {
                       className="w-full bg-transparent border-none focus:ring-0 py-3 sm:py-6 px-2 sm:px-5 text-base sm:text-xl font-bold dark:text-white placeholder-gray-400"
                     />
                   </div>
-                  {searchQuery ? (
-                    <button onClick={() => {setSearchQuery(''); setShowSearchSuggestions(false);}} className="bg-red-500 hover:bg-red-600 text-white p-3 sm:p-6 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-red-500/30 hover:scale-105 active:scale-95">
-                      <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                  
+                  <div className="flex items-center space-x-2 sm:space-x-4 pr-2 sm:pr-4">
+                    <button 
+                      onClick={() => setIsScannerOpen(true)}
+                      className="bg-gray-50 dark:bg-[#0f172a] hover:bg-brand/10 text-brand p-3 sm:p-6 rounded-xl sm:rounded-[2rem] transition-all border border-gray-100 dark:border-gray-800 shadow-sm hover:scale-105 active:scale-95"
+                      title="Escanear Código"
+                    >
+                      <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     </button>
-                  ) : (
-                    <button onClick={() => handleSearchSubmit(searchQuery)} className="bg-brand hover:bg-brand-dark text-white font-[900] px-6 sm:px-16 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-brand/30 hover:scale-105 active:scale-95 text-sm sm:text-base">Buscar</button>
-                  )}
+
+                    {searchQuery ? (
+                      <button onClick={() => {setSearchQuery(''); setShowSearchSuggestions(false);}} className="bg-red-500 hover:bg-red-600 text-white p-3 sm:p-6 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-red-500/30 hover:scale-105 active:scale-95">
+                        <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    ) : (
+                      <button onClick={() => handleSearchSubmit(searchQuery)} className="bg-brand hover:bg-brand-dark text-white font-[900] px-6 sm:px-16 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-brand/30 hover:scale-105 active:scale-95 text-sm sm:text-base">Buscar</button>
+                    )}
+                  </div>
                 </div>
                 
                 {showSearchSuggestions && (
                   <div className="absolute top-full left-0 right-0 mt-4 bg-white/95 dark:bg-[#1e293b]/95 backdrop-blur-md rounded-2xl sm:rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden z-[200]">
-                    {searchQuery.length === 0 && recentSearches.length > 0 && (
+                    {searchQuery.length === 0 && (recentSearches.length > 0 || scannedHistory.length > 0) && (
                       <div className="animate-in fade-in duration-300">
-                        <div className="p-3 sm:p-5 bg-gray-50/50 dark:bg-[#0f172a]/30 border-b border-gray-100 dark:border-gray-800">
-                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pesquisas Recentes</span>
-                        </div>
-                        {recentSearches.map((s, idx) => (
-                          <div key={idx} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group">
-                            <button onClick={() => handleSearchSubmit(s)} className="flex items-center space-x-3 sm:space-x-4 flex-grow text-left">
-                              <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 group-hover:bg-brand group-hover:text-white transition-all">
-                                <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
+                        {scannedHistory.length > 0 && (
+                          <>
+                            <div className="p-3 sm:p-5 bg-gray-50/50 dark:bg-[#0f172a]/30 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Códigos Escaneados</span>
+                              <button onClick={() => setScannedHistory([])} className="text-[10px] font-black text-red-400 uppercase tracking-widest hover:text-red-600 transition-colors">Limpar Histórico</button>
+                            </div>
+                            {scannedHistory.map((code, idx) => (
+                              <button key={idx} onClick={() => handleSearchSubmit(code)} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 group text-left">
+                                <div className="flex items-center space-x-3 sm:space-x-4">
+                                  <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-orange-50 dark:bg-orange-500/10 text-orange-500">
+                                    <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v1l-3 3h6l-3-3V4zM4 10h16v10H4V10z" /></svg>
+                                  </div>
+                                  <span className="text-base sm:text-lg font-bold text-gray-700 dark:text-gray-200 group-hover:text-brand">{code}</span>
+                                </div>
+                                <span className="text-[10px] font-black text-gray-400 uppercase">Código</span>
+                              </button>
+                            ))}
+                          </>
+                        )}
+                        
+                        {recentSearches.length > 0 && (
+                          <>
+                            <div className="p-3 sm:p-5 bg-gray-50/50 dark:bg-[#0f172a]/30 border-b border-gray-100 dark:border-gray-800">
+                              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pesquisas Recentes</span>
+                            </div>
+                            {recentSearches.map((s, idx) => (
+                              <div key={idx} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group">
+                                <button onClick={() => handleSearchSubmit(s)} className="flex items-center space-x-3 sm:space-x-4 flex-grow text-left">
+                                  <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 group-hover:bg-brand group-hover:text-white transition-all">
+                                    <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                  </div>
+                                  <span className="text-base sm:text-lg font-bold text-gray-700 dark:text-gray-200 group-hover:text-brand">{s}</span>
+                                </button>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); removeRecentSearch(s); }}
+                                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                  title="Remover do histórico"
+                                >
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
                               </div>
-                              <span className="text-base sm:text-lg font-bold text-gray-700 dark:text-gray-200 group-hover:text-brand">{s}</span>
-                            </button>
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); removeRecentSearch(s); }}
-                              className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                              title="Remover do histórico"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                          </div>
-                        ))}
+                            ))}
+                          </>
+                        )}
                       </div>
                     )}
                     
@@ -1138,7 +1411,16 @@ const App: React.FC = () => {
                       onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit(searchQuery)}
                       className="w-full bg-transparent border-none focus:ring-0 py-4 sm:py-6 text-base sm:text-xl font-[800] dark:text-white outline-none" 
                     />
-                    <div className="p-2 pr-3 sm:pr-4">
+                    
+                    <div className="flex items-center space-x-2 pr-2 sm:pr-4">
+                      <button 
+                        onClick={() => setIsScannerOpen(true)}
+                        className="p-3 bg-gray-50 dark:bg-[#0f172a] text-brand rounded-xl sm:rounded-2xl transition-all hover:scale-105 active:scale-95 border border-gray-100 dark:border-gray-800"
+                        title="Escanear Código"
+                      >
+                        <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                      </button>
+
                       {searchQuery && (
                         <button 
                           onClick={() => {setSearchQuery(''); setShowSearchSuggestions(false);}} 
@@ -1154,32 +1436,56 @@ const App: React.FC = () => {
                   
                   {showSearchSuggestions && (
                     <div className="absolute top-full left-0 right-0 mt-4 bg-white/95 dark:bg-[#1e293b]/95 backdrop-blur-md rounded-2xl sm:rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden z-[200]">
-                      {searchQuery.length === 0 && recentSearches.length > 0 && (
+                      {searchQuery.length === 0 && (recentSearches.length > 0 || scannedHistory.length > 0) && (
                         <div className="animate-in fade-in duration-300">
-                          <div className="p-3 sm:p-5 bg-gray-50/50 dark:bg-[#0f172a]/30 border-b border-gray-100 dark:border-gray-800">
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pesquisas Recentes</span>
-                          </div>
-                          {recentSearches.map((s, idx) => (
-                            <div key={idx} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group">
-                              <button onClick={() => handleSearchSubmit(s)} className="flex items-center space-x-3 sm:space-x-4 flex-grow text-left">
-                                <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 group-hover:bg-brand group-hover:text-white transition-all">
-                                  <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                  </svg>
+                          {scannedHistory.length > 0 && (
+                            <>
+                              <div className="p-3 sm:p-5 bg-gray-50/50 dark:bg-[#0f172a]/30 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Códigos Escaneados</span>
+                                <button onClick={() => setScannedHistory([])} className="text-[10px] font-black text-red-400 uppercase tracking-widest hover:text-red-600 transition-colors">Limpar Histórico</button>
+                              </div>
+                              {scannedHistory.map((code, idx) => (
+                                <button key={idx} onClick={() => handleSearchSubmit(code)} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 group text-left">
+                                  <div className="flex items-center space-x-3 sm:space-x-4">
+                                    <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-orange-50 dark:bg-orange-500/10 text-orange-500">
+                                      <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v1l-3 3h6l-3-3V4zM4 10h16v10H4V10z" /></svg>
+                                    </div>
+                                    <span className="text-base sm:text-lg font-bold text-gray-700 dark:text-gray-200 group-hover:text-brand">{code}</span>
+                                  </div>
+                                  <span className="text-[10px] font-black text-gray-400 uppercase">Código</span>
+                                </button>
+                              ))}
+                            </>
+                          )}
+
+                          {recentSearches.length > 0 && (
+                            <>
+                              <div className="p-3 sm:p-5 bg-gray-50/50 dark:bg-[#0f172a]/30 border-b border-gray-100 dark:border-gray-800">
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pesquisas Recentes</span>
+                              </div>
+                              {recentSearches.map((s, idx) => (
+                                <div key={idx} className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-brand/5 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-none group">
+                                  <button onClick={() => handleSearchSubmit(s)} className="flex items-center space-x-3 sm:space-x-4 flex-grow text-left">
+                                    <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 group-hover:bg-brand group-hover:text-white transition-all">
+                                      <svg className="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                      </svg>
+                                    </div>
+                                    <span className="text-base sm:text-lg font-bold text-gray-700 dark:text-gray-200 group-hover:text-brand">{s}</span>
+                                  </button>
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); removeRecentSearch(s); }}
+                                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                    title="Remover do histórico"
+                                  >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
                                 </div>
-                                <span className="text-base sm:text-lg font-bold text-gray-700 dark:text-gray-200 group-hover:text-brand">{s}</span>
-                              </button>
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); removeRecentSearch(s); }}
-                                className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                                title="Remover do histórico"
-                              >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            </div>
-                          ))}
+                              ))}
+                            </>
+                          )}
                         </div>
                       )}
                       
@@ -1347,6 +1653,7 @@ const App: React.FC = () => {
             categories={categories}
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
+            onOpenScanner={() => setIsScannerOpen(true)}
           />
         } />
         

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
   <head>
@@ -10,6 +11,7 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2310b981'/%3E%3Cpath d='M11 12c0-2.761 2.239-5 5-5s5 2.239 5 5h-1c0-2.209-1.791-4-4-4s-4 1.791-4 4h-1zm11 2H10c-1.105 0-2 .895-2 2v8c0 1.105.895 2 2 2h12c1.105 0 2-.895 2-2v-8c0-1.105-.895-2-2-2zm-2 4l-4 4-2-2' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script>
       // Shim para o process.env para evitar erros de runtime no navegador
       window.process = { env: { API_KEY: "" } };
@@ -34,6 +36,7 @@
             animation: {
               'marquee': 'marquee 40s linear infinite',
               'success-pop': 'success-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+              'scan-line': 'scan-line 2s ease-in-out infinite',
             },
             keyframes: {
               marquee: {
@@ -44,6 +47,10 @@
                 '0%': { transform: 'scale(1)' },
                 '50%': { transform: 'scale(1.2)' },
                 '100%': { transform: 'scale(1)' },
+              },
+              'scan-line': {
+                '0%, 100%': { top: '0%' },
+                '50%': { top: '100%' }
               }
             }
           }
@@ -126,13 +133,9 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          // O erro de 'origin mismatch' ocorre quando tentamos registrar um SW usando um caminho absoluto 
-          // que aponta para um domínio diferente. Usar o caminho relativo './sw.js' garante que o navegador
-          // tente carregar o arquivo da mesma origem do documento atual.
           navigator.serviceWorker.register('./sw.js')
             .then(reg => console.log('SW registrado com sucesso!', reg.scope))
             .catch(err => {
-              // Logamos apenas um aviso silencioso para não interromper a experiência do usuário em sandboxes
               console.warn('Registro do Service Worker ignorado ou indisponível:', err.message);
             });
         });
