@@ -109,7 +109,16 @@ const ScannerModal = ({ isOpen, onClose, onScanSuccess }: { isOpen: boolean, onC
       Html5Qrcode.getCameras().then((devices: any[]) => {
         if (devices && devices.length > 0) {
           setCameras(devices);
-          setSelectedCameraId(devices[0].id);
+          
+          // Lógica para priorizar a câmera traseira
+          const backCamera = devices.find(device => 
+            /back|rear|traseira|environment/i.test(device.label.toLowerCase())
+          );
+          
+          // Se encontrar uma câmera traseira, seleciona seu ID. 
+          // Caso contrário, seleciona o último da lista (frequentemente a traseira em dispositivos móveis)
+          const defaultCameraId = backCamera ? backCamera.id : devices[devices.length - 1].id;
+          setSelectedCameraId(defaultCameraId);
         }
       }).catch((err: any) => console.error("Erro ao listar câmeras", err));
     } else {
