@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, useParams, useLocation, Navigate, Link } from 'react-router-dom';
 import { Product, Supermarket, MainBanner, GridBanner, ShoppingListItem } from './types.ts';
@@ -927,6 +926,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scanErrorMessage, setScanErrorMessage] = useState<string | null>(null);
   const [scannedHistory, setScannedHistory] = useState<string[]>(() => {
     const saved = localStorage.getItem('ecofeira_scanned_history');
     return saved ? JSON.parse(saved) : [];
@@ -1062,25 +1062,38 @@ const App: React.FC = () => {
   };
 
   const handleScanSuccess = (code: string) => {
-    setScannedHistory(prev => [code, ...prev.filter(c => c !== code)].slice(0, 10));
-    setSearchQuery(code);
-    saveSearch(code);
-    navigate('/produtos');
+    const normalizedCode = normalizeString(code);
     
-    // Feedback sonoro opcional de sucesso
-    try {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.1);
-    } catch (e) {}
+    // Validar se o código corresponde a um ID, Nome ou Categoria de produto existente
+    const isId = products.some(p => p.id === code);
+    const isName = products.some(p => normalizeString(p.name).includes(normalizedCode));
+    const isCategory = products.some(p => normalizeString(p.category).includes(normalizedCode));
+
+    if (isId || isName || isCategory) {
+      setScannedHistory(prev => [code, ...prev.filter(c => c !== code)].slice(0, 10));
+      setSearchQuery(code);
+      saveSearch(code);
+      navigate('/produtos');
+      
+      // Feedback sonoro opcional de sucesso
+      try {
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+      } catch (e) {}
+    } else {
+      // Caso não identificado, avisar na tela conforme solicitado
+      setScanErrorMessage("O código escaneado não foi identificado como um Produto, ID ou Categoria válida.");
+      setTimeout(() => setScanErrorMessage(null), 4000);
+    }
   };
 
   const addToList = (product: Product) => {
@@ -1227,6 +1240,16 @@ const App: React.FC = () => {
     >
       <ScannerModal isOpen={isScannerOpen} onClose={() => setIsScannerOpen(false)} onScanSuccess={handleScanSuccess} />
       
+      {/* Aviso de erro no scanner, renderizado no topo da tela */}
+      {scanErrorMessage && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[500] bg-red-500 text-white px-8 py-4 rounded-2xl shadow-2xl font-black text-sm uppercase tracking-widest animate-in slide-in-from-top-4 duration-300">
+          <div className="flex items-center space-x-3">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            <span>{scanErrorMessage}</span>
+          </div>
+        </div>
+      )}
+      
       <Routes>
         <Route path="/" element={
           <div className="space-y-12 sm:space-y-24">
@@ -1288,25 +1311,21 @@ const App: React.FC = () => {
                   </div>
                   
                   <div className="flex items-center space-x-2 sm:space-x-4 pr-2 sm:pr-4">
+                    {/* Botão do scanner ajustado para círculo conforme o screenshot */}
                     <button 
                       onClick={() => setIsScannerOpen(true)}
-                      className="bg-gray-50 dark:bg-[#0f172a] hover:bg-brand/10 text-brand p-3 sm:p-6 rounded-xl sm:rounded-[2rem] transition-all border border-gray-100 dark:border-gray-800 shadow-sm hover:scale-105 active:scale-95"
+                      className="bg-[#0f172a] hover:bg-brand/20 text-brand p-3 sm:p-6 rounded-full transition-all border border-gray-800 shadow-sm hover:scale-105 active:scale-95 flex items-center justify-center aspect-square"
                       title="Escanear Código"
                     >
                       <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     </button>
 
                     {searchQuery ? (
-                      <div className="flex items-center space-x-2 sm:space-x-4">
-                        <button onClick={() => {setSearchQuery(''); setShowSearchSuggestions(false);}} className="bg-red-500 hover:bg-red-600 text-white p-3 sm:p-6 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-red-500/30 hover:scale-105 active:scale-95">
-                          <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-                        <button onClick={() => handleSearchSubmit(searchQuery)} className="bg-brand hover:bg-brand-dark text-white p-3 sm:p-6 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-brand/30 hover:scale-105 active:scale-95">
-                          <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                        </button>
-                      </div>
+                      <button onClick={() => {setSearchQuery(''); setShowSearchSuggestions(false);}} className="bg-red-500 hover:bg-red-600 text-white p-3 sm:p-6 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-red-500/30 hover:scale-105 active:scale-95">
+                        <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
                     ) : (
-                      <button onClick={() => handleSearchSubmit(searchQuery)} className="bg-brand hover:bg-brand-dark text-white font-[900] px-6 sm:px-16 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-brand/30 hover:scale-105 active:scale-95 text-sm sm:text-base">Buscar</button>
+                      <button onClick={() => handleSearchSubmit(searchQuery)} className="bg-brand hover:bg-brand-dark text-white font-[900] py-3 sm:py-6 px-6 sm:px-16 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-brand/30 hover:scale-105 active:scale-95 text-sm sm:text-base">Buscar</button>
                     )}
                   </div>
                 </div>
@@ -1429,7 +1448,7 @@ const App: React.FC = () => {
                     <div className="flex items-center space-x-2 pr-2 sm:pr-4">
                       <button 
                         onClick={() => setIsScannerOpen(true)}
-                        className="p-3 bg-gray-50 dark:bg-[#0f172a] text-brand rounded-xl sm:rounded-2xl transition-all hover:scale-105 active:scale-95 border border-gray-100 dark:border-gray-800"
+                        className="p-3 bg-[#0f172a] hover:bg-brand/20 text-brand rounded-full transition-all border border-gray-800 shadow-sm hover:scale-105 active:scale-95 flex items-center justify-center aspect-square"
                         title="Escanear Código"
                       >
                         <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
