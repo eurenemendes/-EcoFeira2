@@ -1122,13 +1122,14 @@ const App: React.FC = () => {
   };
 
   const updateQuantity = (id: string, delta: number) => {
-    setShoppingList(prev => prev.map(item => {
-      if (item.id === id) {
-        const newQty = Math.max(1, item.quantity + delta);
-        return { ...item, quantity: newQty };
+    setShoppingList(prev => {
+      const existingItem = prev.find(item => item.id === id);
+      if (existingItem) {
+        const newQty = Math.max(1, existingItem.quantity + delta);
+        return prev.map(item => item.id === id ? { ...item, quantity: newQty } : item);
       }
-      return item;
-    }));
+      return prev;
+    });
   };
 
   const toggleFavorite = (productId: string) => {
@@ -1294,24 +1295,23 @@ const App: React.FC = () => {
             <div className="max-w-4xl mx-auto space-y-8 sm:space-y-10 px-4 mb-8 sm:mb-16">
               <div className="relative group" ref={searchSuggestionRef}>
                 <div className="absolute inset-0 bg-brand/10 blur-3xl rounded-full scale-90 group-focus-within:scale-100 transition-transform duration-700"></div>
-                <div className="relative flex bg-white dark:bg-[#1e293b] rounded-2xl sm:rounded-[2.5rem] p-2 sm:p-3 shadow-2xl shadow-gray-200/40 dark:shadow-none border border-gray-100 dark:border-gray-800 transition-all focus-within:ring-2 focus-within:ring-brand/20">
-                  <div className="flex items-center flex-grow px-3 sm:px-8">
-                    <svg className="w-5 h-5 sm:w-7 sm:h-7 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="relative flex flex-col sm:flex-row bg-white dark:bg-[#1e293b] rounded-3xl sm:rounded-[2.5rem] p-3 sm:p-3 shadow-2xl shadow-gray-200/40 dark:shadow-none border border-gray-100 dark:border-gray-800 transition-all focus-within:ring-2 focus-within:ring-brand/20">
+                  <div className="flex items-center justify-center sm:justify-start flex-grow px-3 sm:px-8 border-2 border-brand/40 sm:border-none rounded-2xl mb-2 sm:mb-0 transition-all focus-within:border-brand">
+                    <svg className="hidden sm:block w-5 h-5 sm:w-7 sm:h-7 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     <input 
                       type="text" 
-                      placeholder="O que você precisa hoje?"
+                      placeholder="O que você procura?"
                       value={searchQuery}
                       onChange={(e) => {setSearchQuery(e.target.value); setShowSearchSuggestions(true);}}
                       onFocus={() => setShowSearchSuggestions(true)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit(searchQuery)}
-                      className="w-full bg-transparent border-none focus:ring-0 py-3 sm:py-6 px-2 sm:px-5 text-base sm:text-xl font-bold dark:text-white placeholder-gray-400"
+                      className="w-full bg-transparent border-none focus:ring-0 py-3 sm:py-6 px-2 sm:px-5 text-base sm:text-xl font-bold dark:text-white placeholder-gray-400 text-center sm:text-left"
                     />
                   </div>
                   
-                  <div className="flex items-center space-x-2 sm:space-x-4 pr-2 sm:pr-4">
-                    {/* Botão do scanner ajustado para círculo conforme o screenshot */}
+                  <div className="flex items-center justify-center sm:justify-end space-x-2 sm:space-x-4 px-2 sm:pr-4 pt-1 sm:pt-0 pb-2 sm:pb-0">
                     <button 
                       onClick={() => setIsScannerOpen(true)}
                       className="bg-[#0f172a] hover:bg-brand/20 text-brand p-3 sm:p-6 rounded-full transition-all border border-gray-800 shadow-sm hover:scale-105 active:scale-95 flex items-center justify-center aspect-square"
@@ -1325,7 +1325,7 @@ const App: React.FC = () => {
                         <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>
                     ) : (
-                      <button onClick={() => handleSearchSubmit(searchQuery)} className="bg-brand hover:bg-brand-dark text-white font-[900] py-3 sm:py-6 px-6 sm:px-16 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-brand/30 hover:scale-105 active:scale-95 text-sm sm:text-base">Buscar</button>
+                      <button onClick={() => handleSearchSubmit(searchQuery)} className="bg-brand hover:bg-brand-dark text-white font-[900] py-3 sm:py-6 px-10 sm:px-16 rounded-xl sm:rounded-[2rem] transition-all shadow-xl shadow-brand/30 hover:scale-105 active:scale-95 text-sm sm:text-base">Buscar</button>
                     )}
                   </div>
                 </div>
