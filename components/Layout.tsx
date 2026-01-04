@@ -6,11 +6,9 @@ interface LayoutProps {
   children: React.ReactNode;
   cartCount: number;
   favoritesCount: number;
-  user: any;
-  onOpenAuth: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCount, user, onOpenAuth }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCount }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -28,8 +26,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
 
   useEffect(() => {
     const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 400);
+      if (window.scrollY > 400) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
     };
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -46,6 +49,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
   }, [isDarkMode]);
 
   const toggleDarkMode = () => setIsDarkMode(prev => !prev);
+  const toggleMenu = () => setIsMenuOpen(prev => !prev);
+
   const handleNav = (path: string) => {
     navigate(path);
     setIsMenuOpen(false);
@@ -55,116 +60,196 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc] dark:bg-[#0f172a] transition-colors duration-300">
-      <div className={`fixed inset-0 z-[200] lg:hidden transition-opacity duration-300 ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+      <div 
+        className={`fixed inset-0 z-[200] lg:hidden transition-opacity duration-300 ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      >
         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
-        <aside className={`absolute right-0 top-0 bottom-0 w-[280px] bg-white dark:bg-[#111827] shadow-2xl transition-transform duration-300 transform ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <aside 
+          className={`absolute right-0 top-0 bottom-0 w-[280px] bg-white dark:bg-[#111827] shadow-2xl transition-transform duration-300 ease-out transform ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        >
           <div className="p-6 h-full flex flex-col">
             <div className="flex items-center justify-between mb-10">
               <div className="flex items-center cursor-pointer" onClick={() => handleNav('/')}>
-                <div className="bg-brand p-2 rounded-xl mr-3"><svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg></div>
+                <div className="bg-brand p-2 rounded-xl mr-3">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                </div>
                 <span className="text-xl font-black text-gray-900 dark:text-white tracking-tighter">EcoFeira</span>
               </div>
-              <button onClick={() => setIsMenuOpen(false)} className="p-2 text-gray-400"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg></button>
+              <button onClick={() => setIsMenuOpen(false)} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-white">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
             <nav className="flex-grow space-y-2">
-              {user && (
-                <div className="flex items-center space-x-3 p-4 mb-4 bg-brand/5 rounded-2xl border border-brand/10">
-                  <img src={user.photoURL} className="w-10 h-10 rounded-full border-2 border-brand" alt="" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-black text-gray-900 dark:text-white truncate">{user.displayName}</p>
-                    <p className="text-[10px] font-bold text-brand uppercase">Eco Cliente</p>
-                  </div>
-                </div>
-              )}
-              <button onClick={() => handleNav('/')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${isActive('/') ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50'}`}>
+              <button onClick={() => handleNav('/')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${isActive('/') ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                 <span>Início</span>
               </button>
-              <button onClick={() => handleNav('/produtos')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${isActive('/produtos') ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400'}`}>
+              <button onClick={() => handleNav('/produtos')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${isActive('/produtos') ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
                 <span>Promoções</span>
               </button>
-              <button onClick={() => handleNav('/supermercados')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${isActive('/supermercados') ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400'}`}>
+              <button onClick={() => handleNav('/supermercados')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${isActive('/supermercados') ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                 <span>Supermercados</span>
               </button>
-              <button onClick={() => handleNav('/favoritos')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${isActive('/favoritos') ? 'bg-red-50 text-red-500' : 'text-gray-500 dark:text-gray-400'}`}>
+              <button onClick={() => handleNav('/perfil')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${isActive('/perfil') ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                <span>Meu Perfil</span>
+              </button>
+              <button onClick={() => handleNav('/favoritos')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${isActive('/favoritos') ? 'bg-red-50 text-red-500' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                 <span>Favoritos</span>
               </button>
-              <button onClick={() => handleNav('/lista')} className={`w-full flex items-center justify-between p-4 rounded-2xl font-bold transition-all ${isActive('/lista') ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400'}`}>
-                <div className="flex items-center space-x-4"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg><span>Lista</span></div>
+              <button onClick={() => handleNav('/lista')} className={`w-full flex items-center justify-between p-4 rounded-2xl font-bold transition-all ${isActive('/lista') ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                <div className="flex items-center space-x-4">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                  <span>Lista de Compras</span>
+                </div>
                 {cartCount > 0 && <span className="bg-brand text-white text-[10px] h-5 w-5 rounded-full flex items-center justify-center">{cartCount}</span>}
               </button>
-              {!user && (
-                <button onClick={onOpenAuth} className="w-full flex items-center space-x-4 p-4 rounded-2xl font-black text-brand bg-brand/10 mt-6">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
-                  <span>Entrar / Cadastrar</span>
-                </button>
-              )}
             </nav>
 
             <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
-              <button onClick={toggleDarkMode} className="w-full flex items-center space-x-4 p-4 rounded-2xl font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-50">
-                {isDarkMode ? (<><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" /></svg><span>Modo Claro</span></>) : (<><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg><span>Modo Escuro</span></>)}
+              <button onClick={toggleDarkMode} className="w-full flex items-center space-x-4 p-4 rounded-2xl font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
+                {isDarkMode ? (
+                  <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" /></svg><span>Modo Claro</span></>
+                ) : (
+                  <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg><span>Modo Escuro</span></>
+                )}
               </button>
             </div>
           </div>
         </aside>
       </div>
 
-      <header className="bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 sticky top-0 z-[100]">
+      <header className="bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 sticky top-0 z-[100] transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
-            <div className="flex items-center cursor-pointer" onClick={() => handleNav('/')}>
-              <div className="bg-brand p-2.5 rounded-2xl mr-3 shadow-lg shadow-brand/20"><svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg></div>
+            <div className="flex items-center cursor-pointer flex-grow lg:flex-grow-0" onClick={() => handleNav('/')}>
+              <div className="bg-brand p-2.5 rounded-2xl mr-3 shadow-lg shadow-brand/20 transition-transform hover:scale-105 active:scale-95">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+              </div>
               <span className="text-2xl font-[900] text-[#111827] dark:text-white tracking-tighter">EcoFeira</span>
             </div>
             
             <nav className="hidden lg:flex items-center space-x-12">
-              <button onClick={() => handleNav('/produtos')} className={`text-[15px] font-extrabold ${isActive('/produtos') ? 'text-brand' : 'text-gray-500 dark:text-gray-400'}`}>Promoções</button>
-              <button onClick={() => handleNav('/supermercados')} className={`text-[15px] font-extrabold ${isActive('/supermercados') ? 'text-brand' : 'text-gray-500 dark:text-gray-400'}`}>Supermercados</button>
+              <button 
+                onClick={() => handleNav('/produtos')}
+                className={`text-[15px] font-extrabold transition-all hover:scale-105 ${isActive('/produtos') ? 'text-brand' : 'text-gray-500 dark:text-gray-400 hover:text-brand'}`}
+              >
+                Promoções
+              </button>
+              <button 
+                onClick={() => handleNav('/supermercados')}
+                className={`text-[15px] font-extrabold transition-all hover:scale-105 ${isActive('/supermercados') ? 'text-brand' : 'text-gray-500 dark:text-gray-400 hover:text-brand'}`}
+              >
+                Supermercados
+              </button>
+              <button 
+                onClick={() => handleNav('/perfil')}
+                className={`text-[15px] font-extrabold transition-all hover:scale-105 ${isActive('/perfil') ? 'text-brand' : 'text-gray-500 dark:text-gray-400 hover:text-brand'}`}
+              >
+                Perfil
+              </button>
             </nav>
 
             <div className="flex items-center space-x-2 sm:space-x-3">
-              <button onClick={onOpenAuth} className={`hidden sm:flex items-center p-3 rounded-full transition-all border shadow-sm ${user ? 'bg-brand/10 border-brand/20' : 'text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-800'}`}>
-                {user ? (
-                  <img src={user.photoURL} className="w-5 h-5 rounded-full" alt="" />
+              <button 
+                onClick={() => handleNav('/favoritos')}
+                className={`relative p-3 rounded-full transition-all border shadow-sm ${isActive('/favoritos') ? 'bg-red-50 text-red-500 border-red-100' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-100 dark:border-gray-800'}`}
+              >
+                <svg className={`w-5 h-5 ${isActive('/favoritos') ? 'fill-current' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                {favoritesCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black rounded-full h-5 w-5 flex items-center justify-center border-2 border-white dark:border-[#0f172a] shadow-lg">
+                    {favoritesCount}
+                  </span>
+                )}
+              </button>
+              
+              <button 
+                onClick={toggleDarkMode}
+                className="hidden sm:flex p-3 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all border border-gray-100 dark:border-gray-800"
+                aria-label="Modo Noturno"
+              >
+                {isDarkMode ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" />
+                  </svg>
                 ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
                 )}
               </button>
 
-              <button onClick={() => handleNav('/favoritos')} className={`relative p-3 rounded-full transition-all border shadow-sm ${isActive('/favoritos') ? 'bg-red-50 text-red-500 border-red-100' : 'text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-800'}`}>
-                <svg className={`w-5 h-5 ${isActive('/favoritos') ? 'fill-current' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                {favoritesCount > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black rounded-full h-5 w-5 flex items-center justify-center border-2 border-white dark:border-[#0f172a] shadow-lg">{favoritesCount}</span>}
-              </button>
-              
-              <button onClick={() => handleNav('/lista')} className={`relative p-3 rounded-full transition-all border shadow-sm ${isActive('/lista') ? 'bg-brand/10 text-brand border-brand/20' : 'bg-white dark:bg-[#1e293b] text-gray-700 dark:text-gray-200 border-gray-100 dark:border-gray-800'}`}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-brand text-white text-[10px] font-black rounded-full h-5 w-5 flex items-center justify-center border-2 border-white dark:border-[#0f172a] shadow-lg">{cartCount}</span>}
+              <button 
+                onClick={() => handleNav('/lista')}
+                className={`relative p-3 rounded-full transition-all border shadow-sm ${isActive('/lista') ? 'bg-brand/10 text-brand border-brand/20' : 'bg-white dark:bg-[#1e293b] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-100 dark:border-gray-800'}`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-brand text-white text-[10px] font-black rounded-full h-5 w-5 flex items-center justify-center border-2 border-white dark:border-[#0f172a] shadow-lg">
+                    {cartCount}
+                  </span>
+                )}
               </button>
 
-              <button onClick={() => setIsMenuOpen(true)} className="p-3 lg:hidden text-gray-500 border border-gray-100 dark:border-gray-800 rounded-2xl"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" /></svg></button>
+              <button 
+                onClick={toggleMenu}
+                className="p-3 ml-1 lg:hidden text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-all border border-gray-100 dark:border-gray-800"
+                aria-label="Menu"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 relative">{children}</main>
+      <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 relative">
+        {children}
+      </main>
 
-      <footer className="bg-white dark:bg-[#0f172a] border-t border-gray-100 dark:border-gray-800 py-16">
+      <footer className="bg-white dark:bg-[#0f172a] border-t border-gray-100 dark:border-gray-800 py-16 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 flex flex-col items-center">
           <div className="flex items-center mb-8">
-            <div className="bg-brand/10 p-2.5 rounded-2xl mr-3"><svg className="w-6 h-6 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg></div>
+            <div className="bg-brand/10 p-2.5 rounded-2xl mr-3">
+              <svg className="w-6 h-6 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </div>
             <span className="text-2xl font-[900] text-[#111827] dark:text-white tracking-tighter">EcoFeira</span>
           </div>
-          <p className="text-gray-400 dark:text-gray-500 text-sm font-bold">© 2024 EcoFeira. Autenticado com Firebase.</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm font-bold tracking-tight">
+            © 2024 EcoFeira. Dados integrados para sua economia.
+          </p>
         </div>
       </footer>
 
-      <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className={`fixed bottom-6 right-6 bg-brand text-white p-2.5 rounded-xl shadow-2xl transition-all duration-500 z-[110] border border-white/20 ${showScrollTop ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'}`}><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg></button>
+      <button 
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className={`fixed bottom-6 right-6 bg-brand/90 dark:bg-brand/80 backdrop-blur-md text-white p-2.5 rounded-xl shadow-2xl shadow-brand/40 hover:scale-110 active:scale-95 transition-all duration-500 z-[110] group border border-white/20 dark:border-brand/30 ${
+          showScrollTop ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'
+        }`}
+        aria-label="Ir para o topo"
+      >
+        <svg className="w-5 h-5 transition-transform group-hover:-translate-y-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+      </button>
     </div>
   );
 };
