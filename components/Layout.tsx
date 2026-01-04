@@ -1,14 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { User } from '../services/firebase';
 
 interface LayoutProps {
   children: React.ReactNode;
   cartCount: number;
   favoritesCount: number;
+  user: User | null;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCount }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCount, user }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -207,12 +209,18 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
 
               <button 
                 onClick={() => handleNav('/perfil')}
-                className={`p-3 rounded-full transition-all border shadow-sm ${isActive('/perfil') ? 'bg-brand/10 text-brand border-brand/20' : 'bg-white dark:bg-[#1e293b] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-100 dark:border-gray-800'}`}
+                className={`p-1.5 rounded-full transition-all border shadow-sm ${isActive('/perfil') ? 'bg-brand/10 text-brand border-brand/20' : 'bg-white dark:bg-[#1e293b] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-100 dark:border-gray-800'}`}
                 aria-label="Meu Perfil"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
+                {user && user.photoURL ? (
+                  <img src={user.photoURL} alt={user.displayName || ''} className="w-8 h-8 rounded-full border border-brand/20" />
+                ) : (
+                  <div className="p-1.5">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                )}
               </button>
 
               <button 
