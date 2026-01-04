@@ -6,21 +6,15 @@ import { Product, ShoppingListItem } from "../types";
  * Nota de Segurança:
  * Em um ambiente de produção real, as chaves de API nunca devem ser expostas no frontend.
  * Este serviço foi estruturado para utilizar process.env.API_KEY, que é injetado com segurança 
- * pelo ambiente de execução. Se você estiver migrando para uma arquitetura com backend próprio,
- * este arquivo deve ser movido para uma Serverless Function (ex: /api/optimize).
+ * pelo ambiente de execução.
  */
 
-const getAIInstance = () => {
-  if (!process.env.API_KEY) {
-    throw new Error("API Key não configurada. Por favor, verifique as variáveis de ambiente.");
-  }
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
-};
-
+// Use directly as per guidelines: Assume API_KEY is pre-configured and valid.
 export const optimizeShoppingList = async (items: ShoppingListItem[], availableProducts: Product[]) => {
   if (items.length === 0) return "Sua lista está vazia! Adicione itens para que eu possa otimizar sua economia.";
 
-  const ai = getAIInstance();
+  // Create instance right before call to ensure up-to-date config
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const prompt = `
     Aja como um especialista sênior em economia doméstica e curadoria de preços.
@@ -48,19 +42,10 @@ export const optimizeShoppingList = async (items: ShoppingListItem[], availableP
       }
     });
 
-    if (!response || !response.text) {
-      throw new Error("Resposta vazia da IA.");
-    }
-
-    return response.text;
+    // Directly access text property
+    return response.text || "Desculpe, não consegui analisar a lista no momento.";
   } catch (error: any) {
-    console.error("Erro crítico no GeminiService:", error);
-    
-    // Fallback amigável sem expor detalhes técnicos sensíveis do erro
-    if (error.message?.includes("API_KEY")) {
-      return "Erro de configuração: Chave de API inválida ou expirada.";
-    }
-    
+    console.error("Erro no GeminiService:", error);
     return "Desculpe, tive um problema ao analisar sua lista agora. Mas não se preocupe, você ainda pode conferir os menores preços marcados na sua lista abaixo!";
   }
 };

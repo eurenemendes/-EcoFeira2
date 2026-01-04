@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -6,9 +5,11 @@ interface LayoutProps {
   children: React.ReactNode;
   cartCount: number;
   favoritesCount: number;
+  user: any | null;
+  onLogin: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCount }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCount, user, onLogin }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -97,32 +98,23 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                 <span>Supermercados</span>
               </button>
-              <button onClick={() => handleNav('/perfil')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${isActive('/perfil') ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                <span>Meu Perfil</span>
-              </button>
-              <button onClick={() => handleNav('/favoritos')} className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${isActive('/favoritos') ? 'bg-red-50 text-red-500' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                <span>Favoritos</span>
-              </button>
-              <button onClick={() => handleNav('/lista')} className={`w-full flex items-center justify-between p-4 rounded-2xl font-bold transition-all ${isActive('/lista') ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
-                <div className="flex items-center space-x-4">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-                  <span>Lista de Compras</span>
-                </div>
-                {cartCount > 0 && <span className="bg-brand text-white text-[10px] h-5 w-5 rounded-full flex items-center justify-center">{cartCount}</span>}
-              </button>
-            </nav>
-
-            <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
-              <button onClick={toggleDarkMode} className="w-full flex items-center space-x-4 p-4 rounded-2xl font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
-                {isDarkMode ? (
-                  <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" /></svg><span>Modo Claro</span></>
+              <button 
+                onClick={user ? () => handleNav('/perfil') : onLogin} 
+                className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold transition-all ${isActive('/perfil') ? 'bg-brand/10 text-brand' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+              >
+                {user ? (
+                  <>
+                    <img src={user.photoURL} className="w-6 h-6 rounded-full border border-brand/20" alt="" />
+                    <span>{user.displayName?.split(' ')[0]}</span>
+                  </>
                 ) : (
-                  <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg><span>Modo Escuro</span></>
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                    <span>Entrar</span>
+                  </>
                 )}
               </button>
-            </div>
+            </nav>
           </div>
         </aside>
       </div>
@@ -153,10 +145,17 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
                 Supermercados
               </button>
               <button 
-                onClick={() => handleNav('/perfil')}
-                className={`text-[15px] font-extrabold transition-all hover:scale-105 ${isActive('/perfil') ? 'text-brand' : 'text-gray-500 dark:text-gray-400 hover:text-brand'}`}
+                onClick={user ? () => handleNav('/perfil') : onLogin}
+                className={`text-[15px] font-extrabold transition-all hover:scale-105 flex items-center space-x-2 ${isActive('/perfil') ? 'text-brand' : 'text-gray-500 dark:text-gray-400 hover:text-brand'}`}
               >
-                Perfil
+                {user ? (
+                  <>
+                    <img src={user.photoURL} className="w-6 h-6 rounded-full border border-brand/20" alt="" />
+                    <span>{user.displayName?.split(' ')[0]}</span>
+                  </>
+                ) : (
+                  <span>Entrar</span>
+                )}
               </button>
             </nav>
 
@@ -172,22 +171,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black rounded-full h-5 w-5 flex items-center justify-center border-2 border-white dark:border-[#0f172a] shadow-lg">
                     {favoritesCount}
                   </span>
-                )}
-              </button>
-              
-              <button 
-                onClick={toggleDarkMode}
-                className="hidden sm:flex p-3 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all border border-gray-100 dark:border-gray-800"
-                aria-label="Modo Noturno"
-              >
-                {isDarkMode ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
                 )}
               </button>
 
@@ -238,18 +221,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, cartCount, favoritesCo
           </p>
         </div>
       </footer>
-
-      <button 
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className={`fixed bottom-6 right-6 bg-brand/90 dark:bg-brand/80 backdrop-blur-md text-white p-2.5 rounded-xl shadow-2xl shadow-brand/40 hover:scale-110 active:scale-95 transition-all duration-500 z-[110] group border border-white/20 dark:border-brand/30 ${
-          showScrollTop ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'
-        }`}
-        aria-label="Ir para o topo"
-      >
-        <svg className="w-5 h-5 transition-transform group-hover:-translate-y-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-        </svg>
-      </button>
     </div>
   );
 };
