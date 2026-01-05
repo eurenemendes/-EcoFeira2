@@ -4,7 +4,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 
 const firebaseConfig = {
   apiKey: "AIzaSyA2_RRnOFy_xbZLtiQRav9oxJ7H4ut13D4",
-  authDomain: "ecofeira2.vercel.app",
+  authDomain: "ecofeira-a05e8.firebaseapp.com",
   projectId: "ecofeira-a05e8",
   storageBucket: "ecofeira-a05e8.firebasestorage.app",
   messagingSenderId: "349676062186",
