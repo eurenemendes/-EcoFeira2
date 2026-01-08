@@ -56,7 +56,7 @@ export const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages,
       </div>
       
       <div className="order-1 sm:order-2">
-        <p className="text-[10px] font-black text-gray-400 dark:text-gray-600 uppercase tracking-[2px]">Navegação EcoFeira</p>
+        <p className="text-[10px] font-black text-gray-400 dark:text-gray-600 uppercase tracking-[2px]"></p>
       </div>
     </div>
   );
